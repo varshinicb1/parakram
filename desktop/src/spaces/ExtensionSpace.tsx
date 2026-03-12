@@ -3,9 +3,9 @@
  * Browse installed extensions, marketplace, enable/disable, install.
  */
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  Puzzle, Download, Check, X, Search, ToggleLeft, ToggleRight,
+  Puzzle, Download, Search, ToggleLeft, ToggleRight,
   Cpu, Thermometer, Radio, Wrench, Shield, Upload, Battery, Activity
 } from 'lucide-react';
 

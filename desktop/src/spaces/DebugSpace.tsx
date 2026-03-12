@@ -5,8 +5,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Terminal, Play, Square, Trash2, Download, Search, Zap,
-  Radio, Cpu, AlertTriangle, Activity, Filter, Send, Settings
+  Terminal, Play, Square, Trash2, Download, Zap,
+  Radio, Cpu, AlertTriangle, Filter, Send
 } from 'lucide-react';
 
 interface SerialLine {
@@ -42,7 +42,7 @@ export default function DebugSpace() {
   const [baudRate, setBaudRate] = useState(115200);
   const [lines, setLines] = useState<SerialLine[]>([]);
   const [filter, setFilter] = useState('');
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [autoScroll, _setAutoScroll] = useState(true);
   const [sendInput, setSendInput] = useState('');
   const [protocolFrames, setProtocolFrames] = useState<ProtocolFrame[]>([]);
   const [i2cDevices, setI2CDevices] = useState<I2CDevice[]>([]);

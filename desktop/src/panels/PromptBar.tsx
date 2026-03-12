@@ -6,8 +6,6 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Play, Zap, Activity, Loader2 } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
-import VoiceMicButton from '../components/VoiceMicButton';
-import LLMSelector from '../components/LLMSelector';
 import type { Node } from '@xyflow/react';
 
 const API_BASE = 'http://localhost:8000';

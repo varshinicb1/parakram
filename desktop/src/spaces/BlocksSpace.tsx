@@ -5,7 +5,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Sun, Settings, Activity, Monitor, Database, Zap, Lock, Volume2, Search, Component
+  Sun, Settings, Activity, Monitor, Database, Zap, Lock, Search, Component
 } from 'lucide-react';
 
 interface BlockEntry {
