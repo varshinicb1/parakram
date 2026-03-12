@@ -1,0 +1,99 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+#include "config.h"
+
+// WiFi and MQTT client instances
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+// Pin definitions
+#define LED_PIN 2
+
+// Function prototypes
+void setup_wifi();
+void reconnect_mqtt();
+
+void setup() {
+  // Initialize serial communication for debugging
+  Serial.begin(115200);
+  
+  // Setup LED pin
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+
+  // Connect to WiFi
+  setup_wifi();
+
+  // Set up MQTT client
+  client.setServer(mqtt_server, mqtt_port);
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect_mqtt();
+  }
+  
+  client.loop();
+
+  // Publish sensor data (example)
+  static unsigned long lastPublish = 0;
+  if (millis() - lastPublish > 2000) { // Every 2 seconds
+    lastPublish = millis();
+    
+    // Example sensor data
+    float temperature = 25.0; // Replace with actual sensor reading
+    float humidity = 60.0;   // Replace with actual sensor reading
+    
+    String payload = "temperature=" + String(temperature) + ",humidity=" + String(humidity);
+    
+    if (client.publish(mqtt_topic, payload.c_str())) {
+      Serial.println("Message published");
+    } else {
+      Serial.println("Failed to publish message");
+    }
+  }
+
+  delay(100); // Small delay to avoid high CPU usage
+}
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
+void reconnect_mqtt() {
+  // Loop until we're reconnected
+  while (!client.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    
+    if (client.connect("ESP32Client")) {
+      Serial.println("connected");
+      
+      // Once connected, publish an announcement...
+      client.publish(mqtt_topic, "Hello from ESP32!");
+    } else {
+      Serial.print("failed, rc=");
+      Serial.print(client.state());
+      Serial.println(" try again in 5 seconds");
+      
+      // Wait 5 seconds before retrying
+      delay(5000);
+    }
+  }
+}

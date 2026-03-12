@@ -1,0 +1,74 @@
+#include <Arduino.h>
+#include "config.h"
+
+// FreeRTOS task handles
+TaskHandle_t sensorTaskHandle = nullptr;
+TaskHandle_t debugTaskHandle = nullptr;
+
+// I2C sensor initialization
+void bme280_setup() {
+    Wire.begin(BME280_SDA_PIN, BME280_SCL_PIN);
+    delay(100); // Wait for the sensor to stabilize
+
+    if (Wire.beginTransmission(0x76) != 0) {
+        Serial.println("BME280 not found! Check wiring.");
+        while (true);
+    }
+
+    Serial.println("BME280 initialized successfully!");
+}
+
+// I2C sensor reading
+void bme280_loop() {
+    Wire.beginTransmission(0x76);
+    Wire.write(0xFA); // Register for temperature MSB
+    Wire.endTransmission();
+
+    Wire.requestFrom(0x76, 3); // Request 3 bytes of data
+
+    if (Wire.available() == 3) {
+        uint8_t msb = Wire.read();
+        uint8_t lsb = Wire.read();
+        uint8_t xlsb = Wire.read();
+
+        int32_t adc_T1 = ((int32_t)msb << 16) | ((int32_t)lsb << 8) | (int32_t)xlsb;
+        Serial.print("Temperature: ");
+        Serial.print(adc_T1 / 100.0);
+        Serial.println(" °C");
+    } else {
+        Serial.println("Failed to read BME280 data!");
+    }
+
+    delay(2000); // Delay between readings
+}
+
+// Debug task
+void debug_task(void *pvParameters) {
+    while (true) {
+        Serial.print("Free Heap: ");
+        Serial.print(ESP.getFreeHeap());
+        Serial.println(" bytes");
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+// Sensor task
+void sensor_task(void *pvParameters) {
+    bme280_setup();
+
+    while (true) {
+        bme280_loop();
+    }
+}
+
+void setup() {
+    Serial.begin(115200);
+
+    // Create tasks
+    xTaskCreate(sensor_task, "Sensor Task", 2048, NULL, 1, &sensorTaskHandle);
+    xTaskCreate(debug_task, "Debug Task", 2048, NULL, 1, &debugTaskHandle);
+}
+
+void loop() {
+    // Main loop should be empty
+}

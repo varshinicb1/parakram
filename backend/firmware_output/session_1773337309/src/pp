@@ -1,0 +1,69 @@
+#include <Arduino.h>
+#include "config.h"
+
+// CAN handle declaration
+CAN_HandleTypeDef hcan;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Configure CAN pins
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = CAN_TX_PIN | CAN_RX_PIN;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF9_CAN1;
+  HAL_GPIO_Init(CAN_GPIO_PORT, &GPIO_InitStruct);
+
+  // Initialize CAN peripheral
+  hcan.Instance = CAN1;
+  hcan.Init.Prescaler = 16; // Adjust based on your system clock
+  hcan.Init.Mode = CAN_MODE_NORMAL;
+  hcan.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan.Init.TimeSeg1 = CAN_BS1_13TQ;
+  hcan.Init.TimeSeg2 = CAN_BS2_2TQ;
+  hcan.Init.TimeTriggeredMode = DISABLE;
+  hcan.Init.AutoBusOff = DISABLE;
+  hcan.Init.AutoWakeUp = DISABLE;
+  hcan.Init.AutoRetransmission = ENABLE;
+  hcan.Init.ReceiveFifoLocked = DISABLE;
+  hcan.Init.TransmitFifoPriority = DISABLE;
+
+  if (HAL_CAN_Init(&hcan) != HAL_OK) {
+    Serial.println("CAN initialization failed");
+    while (1);
+  }
+
+  // Start CAN reception
+  if (HAL_CAN_Start(&hcan) != HAL_OK) {
+    Serial.println("CAN start failed");
+    while (1);
+  }
+}
+
+void loop() {
+  CAN_RxHeaderTypeDef RxHeader;
+  uint8_t RxData[8];
+  HAL_StatusTypeDef status = HAL_CAN_GetRxMessage(&hcan, CAN_RX_FIFO0, &RxHeader, RxData);
+
+  if (status == HAL_OK) {
+    Serial.print("CAN ID: ");
+    Serial.println(RxHeader.StdId);
+    Serial.print("Data: ");
+    for (int i = 0; i < RxHeader.DLC; i++) {
+      Serial.print(RxData[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+  } else if (status == HAL_ERROR) {
+    Serial.println("CAN receive error");
+  } else if (status == HAL_BUSY) {
+    Serial.println("CAN bus busy");
+  } else if (status == HAL_TIMEOUT) {
+    Serial.println("CAN receive timeout");
+  }
+
+  delay(100);
+}

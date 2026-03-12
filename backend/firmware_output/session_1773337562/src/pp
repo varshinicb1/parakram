@@ -1,0 +1,6 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// No configuration defines required for this simple example
+
+#endif // CONFIG_H

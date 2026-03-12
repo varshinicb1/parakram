@@ -1,0 +1,7 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Configuration defines for the I2C scanner
+#define I2C_ADDRESS 0x50
+
+#endif // CONFIG_H

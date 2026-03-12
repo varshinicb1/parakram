@@ -1,0 +1,118 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include "config.h"
+
+// BME280 I2C address
+const uint8_t BME280_I2C_ADDRESS = 0x76;
+
+// Static variables for module-level state
+static float temperature = -999.9;
+static bool bme280_initialized = false;
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000); // Wait for serial port to initialize
+
+    if (!bme280_setup()) {
+        Serial.println("BME280 initialization failed!");
+        while (true) {
+            delay(1000);
+        }
+    }
+
+    Serial.println("BME280 initialized successfully.");
+}
+
+void loop() {
+    if (bme280_initialized) {
+        float temp = bme280_read_temperature();
+        if (temp != -999.9) {
+            Serial.print("Temperature: ");
+            Serial.print(temp);
+            Serial.println(" °C");
+        } else {
+            Serial.println("Failed to read temperature from BME280.");
+        }
+    }
+
+    delay(2000); // Read temperature every 2 seconds
+}
+
+bool bme280_setup() {
+    Wire.begin(SDA_PIN, SCL_PIN);
+
+    uint8_t id;
+    for (int i = 0; i < 10; ++i) {
+        Wire.beginTransmission(BME280_I2C_ADDRESS);
+        Wire.write(0xD0); // Chip ID register
+        if (Wire.endTransmission() == 0) {
+            Wire.requestFrom(BME280_I2C_ADDRESS, 1);
+            id = Wire.read();
+            break;
+        }
+        delay(100);
+    }
+
+    if (id != 0x60) {
+        Serial.println("BME280 chip ID mismatch!");
+        return false;
+    }
+
+    // Initialize BME280
+    Wire.beginTransmission(BME280_I2C_ADDRESS);
+    Wire.write(0xF4); // Control measurement register
+    Wire.write(0x27); // Normal mode, temp oversampling x1, pressure oversampling x1, humidity oversampling x1
+    if (Wire.endTransmission() != 0) {
+        Serial.println("Failed to write control measurement register!");
+        return false;
+    }
+
+    Wire.beginTransmission(BME280_I2C_ADDRESS);
+    Wire.write(0xF5); // Config register
+    Wire.write(0xA0); // Standby time 1000ms, filter off
+    if (Wire.endTransmission() != 0) {
+        Serial.println("Failed to write config register!");
+        return false;
+    }
+
+    bme280_initialized = true;
+    return true;
+}
+
+float bme280_read_temperature() {
+    if (!bme280_initialized) {
+        return -999.9;
+    }
+
+    uint8_t data[8];
+    for (int i = 0; i < 10; ++i) {
+        Wire.beginTransmission(BME280_I2C_ADDRESS);
+        Wire.write(0xFA); // Temperature MSB register
+        if (Wire.endTransmission() == 0) {
+            Wire.requestFrom(BME280_I2C_ADDRESS, 3);
+            if (Wire.available() == 3) {
+                data[0] = Wire.read();
+                data[1] = Wire.read();
+                data[2] = Wire.read();
+                break;
+            }
+        }
+        delay(100);
+    }
+
+    if (Wire.available() != 3) {
+        Serial.println("Failed to read temperature data from BME280!");
+        return -999.9;
+    }
+
+    int32_t adc_T = ((int32_t)data[0] << 16) | ((int32_t)data[1] << 8) | (int32_t)data[2];
+    int32_t var1, var2;
+
+    // Compensation formula
+    var1 = ((((adc_T >> 3) - ((int32_t)bme280_calib.dig_T1 << 1))) * ((int32_t)bme280_calib.dig_T2)) >> 11;
+    var2 = (((((adc_T >> 4) - ((int32_t)bme280_calib.dig_T1)) * ((adc_T >> 4) - ((int32_t)bme280_calib.dig_T1))) >> 12) *
+             ((int32_t)bme280_calib.dig_T3)) >> 14;
+    bme280_temperature = (var1 + var2) / 5120;
+
+    return bme280_temperature;
+}

@@ -130,7 +130,7 @@ def _load_settings() -> dict:
         except Exception:
             pass
     return {
-        "active_model": "qwen/qwen3-coder:free",
+        "active_model": "groq-llama",
         "api_keys": {},
         "custom_providers": [],
     }
@@ -172,7 +172,8 @@ def get_api_key(provider: str) -> str:
         "openrouter": "OPENROUTER_API_KEY",
         "openai": "OPENAI_API_KEY",
         "anthropic": "ANTHROPIC_API_KEY",
-        "google": "GOOGLE_API_KEY",
+        "google": "GEMINI_API_KEY",
+        "groq": "GROQ_API_KEY",
     }
     return os.environ.get(env_map.get(provider, ""), "")
 
@@ -317,6 +318,147 @@ class OpenRouterProvider:
     def name(self) -> str:
         return f"OpenRouter ({self.model_id})"
 
+
+class GeminiProvider:
+    """Google Gemini API provider — free tier, 1M context, excellent code generation.
+    Get a free API key at: https://aistudio.google.com/apikey
+    """
+
+    def __init__(self, model: str = "gemini-2.0-flash", api_key: str = ""):
+        self.model = model
+        self.api_key = api_key or get_api_key("google") or os.environ.get("GEMINI_API_KEY", "")
+        self.base_url = "https://generativelanguage.googleapis.com/v1beta"
+
+    async def generate(self, prompt: str, max_tokens: int = 3000,
+                       system: str = None, temperature: float = 0.3) -> str:
+        if not self.api_key:
+            print("[Gemini] No API key. Get one free at https://aistudio.google.com/apikey")
+            return ""
+        try:
+            contents = []
+            if system:
+                contents.append({"role": "user", "parts": [{"text": system}]})
+                contents.append({"role": "model", "parts": [{"text": "Understood. I will follow these instructions."}]})
+            contents.append({"role": "user", "parts": [{"text": prompt}]})
+
+            payload = {
+                "contents": contents,
+                "generationConfig": {
+                    "maxOutputTokens": max_tokens,
+                    "temperature": temperature,
+                },
+            }
+
+            url = f"{self.base_url}/models/{self.model}:generateContent?key={self.api_key}"
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    url, json=payload,
+                    timeout=aiohttp.ClientTimeout(total=120),
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            return parts[0].get("text", "") if parts else ""
+                        return ""
+                    else:
+                        body = await resp.text()
+                        print(f"[Gemini] HTTP {resp.status}: {body[:300]}")
+                        return ""
+        except Exception as e:
+            print(f"[Gemini] Generate error: {e}")
+            return ""
+
+    async def generate_code(self, prompt: str, max_tokens: int = 4000) -> dict:
+        response = await self.generate(
+            prompt=prompt, max_tokens=max_tokens,
+            system=ESP32_SYSTEM_PROMPT, temperature=0.2,
+        )
+        return _extract_code(response)
+
+    async def embed(self, text: str) -> list[float]:
+        ollama = OllamaProvider()
+        return await ollama.embed(text)
+
+    def is_available(self) -> bool:
+        return bool(self.api_key)
+
+    @property
+    def name(self) -> str:
+        return f"Gemini ({self.model})"
+
+
+class GroqProvider:
+    """Groq API provider — free tier, Llama 3.3 70B, blazing fast inference.
+    Get a free API key at: https://console.groq.com/keys
+    """
+
+    def __init__(self, model: str = "llama-3.3-70b-versatile", api_key: str = ""):
+        self.model = model
+        self.api_key = api_key or get_api_key("groq") or os.environ.get("GROQ_API_KEY", "")
+        self.base_url = "https://api.groq.com/openai/v1"
+
+    async def generate(self, prompt: str, max_tokens: int = 3000,
+                       system: str = None, temperature: float = 0.3) -> str:
+        if not self.api_key:
+            print("[Groq] No API key. Get one free at https://console.groq.com/keys")
+            return ""
+        try:
+            messages = []
+            if system:
+                messages.append({"role": "system", "content": system})
+            messages.append({"role": "user", "content": prompt})
+
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+            }
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}",
+            }
+
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload, headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=120),
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        choices = data.get("choices", [])
+                        if choices:
+                            return choices[0].get("message", {}).get("content", "")
+                        return ""
+                    else:
+                        body = await resp.text()
+                        print(f"[Groq] HTTP {resp.status}: {body[:300]}")
+                        return ""
+        except Exception as e:
+            print(f"[Groq] Generate error: {e}")
+            return ""
+
+    async def generate_code(self, prompt: str, max_tokens: int = 4000) -> dict:
+        response = await self.generate(
+            prompt=prompt, max_tokens=max_tokens,
+            system=ESP32_SYSTEM_PROMPT, temperature=0.2,
+        )
+        return _extract_code(response)
+
+    async def embed(self, text: str) -> list[float]:
+        ollama = OllamaProvider()
+        return await ollama.embed(text)
+
+    def is_available(self) -> bool:
+        return bool(self.api_key)
+
+    @property
+    def name(self) -> str:
+        return f"Groq ({self.model})"
 
 class GenericOpenAIProvider:
     """Any OpenAI-compatible API endpoint (user-configured)."""
@@ -485,11 +627,25 @@ class LLMRouter:
 
     def _load_from_settings(self):
         settings = _load_settings()
-        self._active_model_id = settings.get("active_model", "deepseek/deepseek-chat-v3-0324:free")
+        self._active_model_id = settings.get("active_model", "gemini-flash")
 
     def _get_provider(self, model_id: str = None):
         """Dynamically create the correct provider for a model ID."""
         mid = model_id or self._active_model_id
+
+        # Google Gemini models
+        if mid == "gemini-flash":
+            return GeminiProvider(model="gemini-2.0-flash")
+        if mid == "gemini-pro":
+            return GeminiProvider(model="gemini-2.5-pro-preview-06-05")
+        if mid.startswith("gemini-"):
+            return GeminiProvider(model=mid.replace("gemini-", ""))
+
+        # Groq models
+        if mid == "groq-llama":
+            return GroqProvider(model="llama-3.3-70b-versatile")
+        if mid.startswith("groq-"):
+            return GroqProvider(model=mid.replace("groq-", ""))
 
         # Ollama local models
         if mid == "ollama" or mid.startswith("ollama/"):
@@ -562,6 +718,37 @@ class LLMRouter:
             "context": 32768,
             "free": True,
             "active": self._active_model_id == "parakram-custom",
+        })
+
+        # Google Gemini (free)
+        models.append({
+            "id": "gemini-flash",
+            "name": "Gemini 2.0 Flash (Recommended)",
+            "provider": "google",
+            "category": "coding",
+            "context": 1048576,
+            "free": True,
+            "active": self._active_model_id == "gemini-flash",
+        })
+        models.append({
+            "id": "gemini-pro",
+            "name": "Gemini 2.5 Pro",
+            "provider": "google",
+            "category": "reasoning",
+            "context": 1048576,
+            "free": True,
+            "active": self._active_model_id == "gemini-pro",
+        })
+
+        # Groq (free)
+        models.append({
+            "id": "groq-llama",
+            "name": "Llama 3.3 70B (Groq)",
+            "provider": "groq",
+            "category": "coding",
+            "context": 131072,
+            "free": True,
+            "active": self._active_model_id == "groq-llama",
         })
 
         # User custom providers

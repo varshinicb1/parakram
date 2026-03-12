@@ -1,0 +1,24 @@
+#include <Arduino.h>
+#include "esp_sleep.h"
+#include "driver/rtc_io.h"
+
+// Define the wakeup timer interval in seconds (5 minutes = 300 seconds)
+#define WAKEUP_INTERVAL_SECONDS 300
+
+void setup() {
+    // Initialize serial communication for debugging
+    Serial.begin(115200);
+    while (!Serial) delay(10); // Wait for serial port to connect
+
+    // Configure the RTC timer for deep sleep
+    esp_sleep_enable_timer_wakeup(WAKEUP_INTERVAL_SECONDS * uS_TO_S_FACTOR);
+
+    // Enter deep sleep mode
+    Serial.println("Entering deep sleep...");
+    esp_deep_sleep_start();
+}
+
+void loop() {
+    // This function should not be called in deep sleep mode
+    Serial.println("This should not print if the ESP32 is in deep sleep.");
+}

@@ -1,0 +1,7 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Define the pin connected to the NeoPixels
+#define NEOPIXEL_PIN 18
+
+#endif // CONFIG_H

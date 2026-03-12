@@ -1,0 +1,95 @@
+#include <Arduino.h>
+#include "config.h"
+#include <Wire.h>
+#include <DHT.h>
+#include <FreeRTOS.h>
+#include <task.h>
+
+// Sensor libraries
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+
+// DHT sensor
+#define DHT_TYPE DHT11
+DHT dht(DHT11_PIN, DHT_TYPE);
+
+// BME280 sensor
+Adafruit_BME280 bme;
+
+// FreeRTOS task handles
+TaskHandle_t bme280TaskHandle = NULL;
+TaskHandle_t dhtTaskHandle = NULL;
+
+// Function prototypes
+void vBME280Task(void *pvParameters);
+void vDHT11Task(void *pvParameters);
+
+void setup() {
+  Serial.begin(115200);
+
+  // Initialize sensors
+  if (!bme.begin(BME280_I2C_ADDRESS)) {
+    Serial.println("Failed to initialize BME280 sensor");
+    while (true);
+  }
+
+  if (!dht.begin()) {
+    Serial.println("Failed to initialize DHT11 sensor");
+    while (true);
+  }
+
+  // Create FreeRTOS tasks
+  xTaskCreate(vBME280Task, "BME280 Task", configMINIMAL_STACK_SIZE * 4, NULL, 1, &bme280TaskHandle);
+  xTaskCreate(vDHT11Task, "DHT11 Task", configMINIMAL_STACK_SIZE * 4, NULL, 1, &dhtTaskHandle);
+
+  // Start the scheduler
+  vTaskStartScheduler();
+}
+
+void loop() {
+  // This should never be reached with FreeRTOS
+  while (true);
+}
+
+// BME280 task function
+void vBME280Task(void *pvParameters) {
+  for (;;) {
+    float temperature = bme.readTemperature();
+    float humidity = bme.readHumidity();
+    float pressure = bme.readPressure() / 100.0F;
+
+    if (isnan(temperature) || isnan(humidity) || isnan(pressure)) {
+      Serial.println("Failed to read from BME280 sensor");
+    } else {
+      Serial.print("BME280: Temperature = ");
+      Serial.print(temperature);
+      Serial.print(" *C, Humidity = ");
+      Serial.print(humidity);
+      Serial.print(" %, Pressure = ");
+      Serial.print(pressure);
+      Serial.println(" hPa");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(2000)); // Delay for 2 seconds
+  }
+}
+
+// DHT11 task function
+void vDHT11Task(void *pvParameters) {
+  for (;;) {
+    float humidity = dht.readHumidity();
+    float temperature = dht.readTemperature();
+
+    if (isnan(humidity) || isnan(temperature)) {
+      Serial.println("Failed to read from DHT11 sensor");
+    } else {
+      Serial.print("DHT11: Temperature = ");
+      Serial.print(temperature);
+      Serial.print(" *C, Humidity = ");
+      Serial.print(humidity);
+      Serial.println(" %");
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(2000)); // Delay for 2 seconds
+  }
+}

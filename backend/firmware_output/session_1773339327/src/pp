@@ -1,0 +1,68 @@
+#include <Arduino.h>
+#include "driver/timer.h"
+#include "esp_sleep.h"
+
+// Function prototypes
+void setup_timer();
+void deep_sleep();
+
+void setup() {
+    Serial.begin(115200);
+    delay(1000); // Wait for serial connection to initialize
+
+    Serial.println("Starting setup...");
+
+    // Initialize the timer
+    if (!setup_timer()) {
+        Serial.println("Failed to set up timer. Entering deep sleep...");
+        deep_sleep();
+    }
+
+    Serial.println("Timer set up successfully.");
+}
+
+void loop() {
+    // This function should not be called in this example
+    while (1) {
+        delay(1);
+    }
+}
+
+bool setup_timer() {
+    // Configure the timer
+    timer_config_t config = {
+        .divider = 80, // Timer clock divider to get a 1MHz tick rate
+        .counter_dir = TIMER_COUNT_UP,
+        .counter_en = TIMER_PAUSE,
+        .alarm_en = TIMER_ALARM_EN,
+        .auto_reload = TIMER_AUTORELOAD_DIS
+    };
+    timer_init(TIMER_GROUP_0, TIMER_0, &config);
+
+    // Set the alarm value to 300,000 ticks (5 minutes * 60 seconds * 1000 milliseconds)
+    uint64_t alarm_value = 300000;
+    timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, alarm_value);
+
+    // Enable the interrupt
+    timer_enable_intr(TIMER_GROUP_0, TIMER_0);
+    timer_isr_register(TIMER_GROUP_0, TIMER_0, timer_isr_handler, NULL, ESP_INTR_FLAG_LEVEL1, NULL);
+
+    // Start the counter
+    timer_start(TIMER_GROUP_0, TIMER_0);
+
+    return true;
+}
+
+void deep_sleep() {
+    Serial.println("Entering deep sleep...");
+
+    esp_sleep_enable_timer_wakeup(300 * 1000 * 1000); // Wake up every 5 minutes (5 * 60 * 1000 * 1000 microseconds)
+    esp_deep_sleep_start();
+}
+
+// Timer ISR handler
+void IRAM_ATTR timer_isr_handler(void* arg) {
+    Serial.println("Timer interrupt triggered. Entering deep sleep...");
+    esp_sleep_enable_timer_wakeup(300 * 1000 * 1000); // Wake up every 5 minutes (5 * 60 * 1000 * 1000 microseconds)
+    esp_deep_sleep_start();
+}

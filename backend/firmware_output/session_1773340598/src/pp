@@ -1,0 +1,14 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// Define ADC1 channel 4 and 5
+#define ADC1_CHANNEL_4 ADC_CHANNEL_4
+#define ADC1_CHANNEL_5 ADC_CHANNEL_5
+
+// Define ADC bit width
+#define ADC_BIT_WIDTH_12 ADC_BIT_WIDTH_12
+
+// Define ADC attenuation
+#define ADC_ATTEN_11dB ADC_ATTEN_11dB
+
+#endif  // CONFIG_H

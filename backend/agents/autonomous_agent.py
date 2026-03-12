@@ -217,8 +217,15 @@ class AutonomousAgent:
             llm = get_provider()
 
             code_prompt = self._build_code_prompt(intent, chip_context)
-            response = await llm.generate(code_prompt)
+            response = await llm.generate(code_prompt, max_tokens=3000)
             files = self._extract_files(response)
+
+            # Retry with simpler prompt if the model returned nothing
+            if not files:
+                await emit("generate_code", "running", "Retrying with simplified prompt...")
+                simple_prompt = self._build_simple_prompt(intent)
+                response = await llm.generate(simple_prompt, max_tokens=3000)
+                files = self._extract_files(response)
 
             if not files:
                 await emit("generate_code", "error", "LLM returned no extractable code, using stub")
@@ -345,21 +352,88 @@ Return code in fenced blocks with filenames:
 
 IMPORTANT: The code MUST compile with PlatformIO. Do not use placeholder values."""
 
+    def _build_simple_prompt(self, intent: dict) -> str:
+        """Build a shorter prompt for small local models (parakram-coder).
+        Uses the ===HEADER===/===SOURCE=== format the model was trained on."""
+        peripherals_str = ", ".join(intent["peripherals"]) if intent["peripherals"] else "none"
+        return f"""Generate complete Arduino C++ firmware for {intent['board']}.
+
+Task: {intent['raw_prompt']}
+Peripherals: {peripherals_str}
+
+Rules:
+1. Include ALL necessary #include directives
+2. Add setup() and loop() functions
+3. Use Serial.begin(115200) for debug output
+4. Handle errors with Serial.println
+
+Reply with code using this EXACT format:
+
+===HEADER===
+(complete .h file)
+===SOURCE===
+(complete .cpp file with #include <Arduino.h>)"""
+
     def _extract_files(self, response: str) -> dict[str, str]:
-        """Extract files from LLM response (```cpp:filename format)."""
+        """Extract files from LLM response. Handles multiple formats:
+        1. ===HEADER=== / ===SOURCE=== (parakram-coder trained format)
+        2. ```cpp:filename fenced blocks (OpenRouter prompt format)
+        3. Plain ```cpp fenced blocks (generic fallback)
+        """
         files = {}
-        # Pattern: ```cpp:filename or ```c:filename
+
+        if not response:
+            return files
+
+        # ── Format 1: ===HEADER=== / ===SOURCE=== (parakram-coder) ──
+        if "===HEADER===" in response and "===SOURCE===" in response:
+            parts = response.split("===SOURCE===")
+            header_raw = parts[0].replace("===HEADER===", "").strip()
+            source_raw = parts[1].strip() if len(parts) > 1 else ""
+
+            # Strip ``` fences inside the markers
+            for fence in ["```cpp", "```c", "```arduino", "```"]:
+                header_raw = header_raw.replace(fence, "")
+                source_raw = source_raw.replace(fence, "")
+
+            header = header_raw.strip()
+            source = source_raw.strip()
+
+            if source:
+                files["main.cpp"] = source
+            if header:
+                # Try to extract the guard name for the header filename
+                guard_match = re.search(r'#ifndef\s+(\w+)_H', header)
+                if guard_match:
+                    header_name = guard_match.group(1).lower() + ".h"
+                else:
+                    header_name = "config.h"
+                files[header_name] = header
+
+            if files:
+                return files
+
+        # ── Format 2: ```cpp:filename fenced blocks ──
         pattern = r'```(?:cpp|c|h):?\s*([\w.]+)\s*\n(.*?)```'
         matches = re.findall(pattern, response, re.DOTALL)
         for filename, content in matches:
             files[filename] = content.strip()
 
-        # Fallback: if no named files, try to extract any cpp block as main.cpp
-        if not files:
-            plain_pattern = r'```(?:cpp|c)\s*\n(.*?)```'
-            plain_matches = re.findall(plain_pattern, response, re.DOTALL)
-            if plain_matches:
-                files["main.cpp"] = plain_matches[0].strip()
+        if files:
+            return files
+
+        # ── Format 3: Plain fenced code blocks → main.cpp ──
+        plain_pattern = r'```(?:cpp|c|arduino)\s*\n(.*?)```'
+        plain_matches = re.findall(plain_pattern, response, re.DOTALL)
+        if len(plain_matches) >= 2:
+            files["config.h"] = plain_matches[0].strip()
+            files["main.cpp"] = plain_matches[1].strip()
+        elif len(plain_matches) == 1:
+            files["main.cpp"] = plain_matches[0].strip()
+
+        # ── Format 4: Raw code without fences ──
+        if not files and ("#include" in response or "void setup" in response):
+            files["main.cpp"] = response.strip()
 
         return files
 

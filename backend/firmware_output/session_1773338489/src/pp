@@ -1,0 +1,28 @@
+// FILE: main.cpp
+#include <Arduino.h>
+#include "config.h"
+
+#define LED_PIN 2
+
+void setup() {
+    // Initialize serial communication for debugging
+    Serial.begin(115200);
+
+    // Configure the LED pin as an output
+    pinMode(LED_PIN, OUTPUT);
+
+    // Turn off the LED initially
+    digitalWrite(LED_PIN, LOW);
+}
+
+void loop() {
+    // Toggle the LED state
+    digitalWrite(LED_PIN, !digitalRead(LED_PIN));
+
+    // Add a small delay to control the blink rate
+    delay(500);
+
+    // Print the current LED state for debugging
+    Serial.print("LED State: ");
+    Serial.println(digitalRead(LED_PIN) ? "HIGH" : "LOW");
+}

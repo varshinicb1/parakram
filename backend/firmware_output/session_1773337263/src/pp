@@ -1,0 +1,72 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "config.h"
+
+// Define pins
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+
+// Create instances
+Adafruit_BME280 bme; // I2C
+Adafruit_SSD1306 display(OLED_WIDTH, OLED_HEIGHT, &Wire, OLED_RESET);
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Initialize BME280 sensor
+  if (!bme.begin(bme280_i2c_address)) {
+    Serial.println("Could not find a valid BME280 sensor, check wiring!");
+    while (1);
+  }
+
+  // Initialize OLED display
+  if(!display.begin(SSD1306_SWITCHCAPVCC, oled_i2c_address)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+  
+  delay(2000);
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println("Weather Station");
+  display.display();
+
+  Serial.println("Weather station initialized.");
+}
+
+void loop() {
+  // Read sensor data
+  float temperature = bme.readTemperature();
+  float humidity = bme.readHumidity();
+  float pressure = bme.readPressure() / 100.0F;
+
+  if (isnan(temperature) || isnan(humidity) || isnan(pressure)) {
+    Serial.println("Failed to read from BME280 sensor!");
+    return;
+  }
+
+  // Display data on OLED
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Temp: ");
+  display.print(temperature);
+  display.println(" *C");
+  
+  display.print("Humidity: ");
+  display.print(humidity);
+  display.println(" %");
+
+  display.print("Pressure: ");
+  display.print(pressure);
+  display.println(" hPa");
+
+  display.display();
+
+  // Delay for a while before next reading
+  delay(2000);
+}
