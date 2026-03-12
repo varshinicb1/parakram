@@ -1,0 +1,76 @@
+{
+    "id": "spi_display",
+    "name": "SPI Display",
+    "category": "display",
+    "description": "ILI9341/ST7789 SPI display driver via TFT_eSPI.",
+    "inputs": [],
+    "outputs": [
+        {
+            "name": "ready",
+            "data_type": "bool"
+        }
+    ],
+    "configuration": [
+        {
+            "key": "driver",
+            "label": "Driver",
+            "value_type": "string",
+            "default": "ILI9341"
+        },
+        {
+            "key": "width",
+            "label": "Width",
+            "value_type": "int",
+            "default": "320"
+        },
+        {
+            "key": "height",
+            "label": "Height",
+            "value_type": "int",
+            "default": "240"
+        },
+        {
+            "key": "cs_pin",
+            "label": "CS Pin",
+            "value_type": "int",
+            "default": "5"
+        },
+        {
+            "key": "dc_pin",
+            "label": "DC Pin",
+            "value_type": "int",
+            "default": "16"
+        },
+        {
+            "key": "rst_pin",
+            "label": "RST Pin",
+            "value_type": "int",
+            "default": "17"
+        },
+        {
+            "key": "spi_freq",
+            "label": "SPI Freq (MHz)",
+            "value_type": "int",
+            "default": "40"
+        },
+        {
+            "key": "rotation",
+            "label": "Rotation",
+            "value_type": "int",
+            "default": "1"
+        }
+    ],
+    "libraries": [
+        "bodmer/TFT_eSPI@^2.5.0"
+    ],
+    "firmware_template": {
+        "header": "#ifndef SPI_DISPLAY_H\n#define SPI_DISPLAY_H\n#include <Arduino.h>\n#include <TFT_eSPI.h>\n\nvoid spi_display_setup();\nTFT_eSPI& spi_display_get();\nvoid spi_display_clear(uint16_t color = TFT_BLACK);\nvoid spi_display_text(const char* text, int x, int y, uint16_t color = TFT_WHITE);\nvoid spi_display_draw_rect(int x, int y, int w, int h, uint16_t color);\nvoid spi_display_fill_rect(int x, int y, int w, int h, uint16_t color);\n\n#endif",
+        "source": "#include \"spi_display.h\"\n\nstatic TFT_eSPI _display(240, 320);\n\nvoid spi_display_setup() {\n    _display.init();\n    _display.setRotation(1);\n    _display.fillScreen(TFT_BLACK);\n    _display.setTextColor(TFT_WHITE, TFT_BLACK);\n    _display.setTextSize(2);\n    Serial.println(\"[display] SPI display ready\");\n}\n\nTFT_eSPI& spi_display_get() { return _display; }\n\nvoid spi_display_clear(uint16_t color) { _display.fillScreen(color); }\n\nvoid spi_display_text(const char* text, int x, int y, uint16_t color) {\n    _display.setTextColor(color, TFT_BLACK);\n    _display.setCursor(x, y);\n    _display.print(text);\n}\n\nvoid spi_display_draw_rect(int x, int y, int w, int h, uint16_t color) {\n    _display.drawRect(x, y, w, h, color);\n}\n\nvoid spi_display_fill_rect(int x, int y, int w, int h, uint16_t color) {\n    _display.fillRect(x, y, w, h, color);\n}"
+    },
+    "icon": "📺",
+    "color": "#14b8a6",
+    "memory_estimate": {
+        "flash": 60000,
+        "sram": 20000
+    }
+}

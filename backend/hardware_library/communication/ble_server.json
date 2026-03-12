@@ -1,0 +1,51 @@
+{
+    "id": "ble_server",
+    "name": "BLE Server",
+    "category": "communication",
+    "description": "Bluetooth Low Energy GATT server with read/write characteristics.",
+    "inputs": [
+        {
+            "name": "data",
+            "data_type": "any",
+            "description": "Data to advertise"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "connected",
+            "data_type": "bool"
+        },
+        {
+            "name": "received",
+            "data_type": "string",
+            "description": "Data written by client"
+        }
+    ],
+    "configuration": [
+        {
+            "key": "device_name",
+            "label": "BLE Name",
+            "value_type": "string",
+            "default": "Parakram-BLE"
+        },
+        {
+            "key": "service_uuid",
+            "label": "Service UUID",
+            "value_type": "string",
+            "default": "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+        },
+        {
+            "key": "char_uuid",
+            "label": "Characteristic UUID",
+            "value_type": "string",
+            "default": "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+        }
+    ],
+    "libraries": [],
+    "firmware_template": {
+        "header": "#ifndef BLE_SERVER_H\n#define BLE_SERVER_H\n#include <Arduino.h>\n\nvoid ble_server_setup();\nvoid ble_server_loop();\nvoid ble_server_notify(const char* data);\nbool ble_server_connected();\nextern String ble_received_data;\n\n#endif",
+        "source": "#include \"ble_server.h\"\n#include <BLEDevice.h>\n#include <BLEServer.h>\n#include <BLEUtils.h>\n#include <BLE2902.h>\n#include \"config.h\"\n\nBLEServer* _bleServer = nullptr;\nBLECharacteristic* _bleChar = nullptr;\nbool _bleConnected = false;\nString ble_received_data = \"\";\n\nclass BLECallbacks : public BLEServerCallbacks {\n    void onConnect(BLEServer* s) { _bleConnected = true; Serial.println(\"[ble] Connected\"); }\n    void onDisconnect(BLEServer* s) { _bleConnected = false; Serial.println(\"[ble] Disconnected\"); s->startAdvertising(); }\n};\n\nclass CharCallbacks : public BLECharacteristicCallbacks {\n    void onWrite(BLECharacteristic* c) {\n        ble_received_data = String(c->getValue().c_str());\n        Serial.printf(\"[ble] Received: %s\\n\", ble_received_data.c_str());\n    }\n};\n\nvoid ble_server_setup() {\n    BLEDevice::init(\"Parakram-BLE\");\n    _bleServer = BLEDevice::createServer();\n    _bleServer->setCallbacks(new BLECallbacks());\n    BLEService* svc = _bleServer->createService(\"4fafc201-1fb5-459e-8fcc-c5c9c331914b\");\n    _bleChar = svc->createCharacteristic(\"beb5483e-36e1-4688-b7f5-ea07361b26a8\",\n        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);\n    _bleChar->addDescriptor(new BLE2902());\n    _bleChar->setCallbacks(new CharCallbacks());\n    svc->start();\n    _bleServer->getAdvertising()->start();\n    Serial.println(\"[ble] Server started\");\n}\n\nvoid ble_server_loop() {}\n\nvoid ble_server_notify(const char* data) {\n    if (_bleConnected && _bleChar) {\n        _bleChar->setValue(data);\n        _bleChar->notify();\n    }\n}\n\nbool ble_server_connected() { return _bleConnected; }"
+    },
+    "icon": "🔵",
+    "color": "#3b82f6"
+}

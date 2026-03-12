@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+/* ── Design Tokens (Stark HUD Theme — Default) ─────────── */
+:root {
+  --bg-primary: #020204;
+  --bg-secondary: #08080a;
+  --bg-tertiary: #0c0c0f;
+  --bg-elevated: #101014;
+  --bg-glass: rgba(0, 240, 255, 0.02);
+  --bg-glass-hover: rgba(0, 240, 255, 0.06);
+
+  --text-primary: #e0f2fe;
+  --text-secondary: #7dd3fc;
+  --text-muted: #38bdf888;
+  --text-accent: #00f0ff;
+
+  --accent: #06b6d4;
+  --accent-hover: #00f0ff;
+  --accent-glow: rgba(0, 240, 255, 0.4);
+  --accent-subtle: rgba(0, 240, 255, 0.1);
+
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #0ea5e9;
+
+  --sensor: #ef4444;
+  --actuator: #f59e0b;
+  --communication: #8b5cf6;
+  --display: #06b6d4;
+  --storage: #10b981;
+  --power: #eab308;
+  --security: #ec4899;
+  --logic: #6366f1;
+  --audio: #14b8a6;
+
+  --border: rgba(0, 240, 255, 0.15);
+  --border-accent: rgba(0, 240, 255, 0.5);
+
+  --radius-sm: 0px;
+  --radius-md: 2px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 0 5px rgba(0, 240, 255, 0.1);
+  --shadow-md: 0 0 10px rgba(0, 240, 255, 0.15);
+  --shadow-lg: 0 0 20px rgba(0, 240, 255, 0.2);
+  --shadow-glow: 0 0 30px var(--accent-glow);
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --sidebar-width: 64px;
+  --sidebar-expanded: 220px;
+  --prompt-height: 56px;
+  --bottom-height: 240px;
+}
+
+/* ── Cyberpunk Theme ──────────────────────────────────── */
+[data-theme="cyberpunk"] {
+  --bg-primary: #0d0221;
+  --bg-secondary: #150535;
+  --bg-tertiary: #1a0a3e;
+  --bg-elevated: #2a1055;
+  --accent: #ff2a6d;
+  --accent-hover: #ff5c8a;
+  --accent-glow: rgba(255, 42, 109, 0.3);
+  --text-accent: #05d9e8;
+}
+
+/* ── Midnight Theme ───────────────────────────────────── */
+[data-theme="midnight"] {
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #1e293b;
+  --bg-elevated: #334155;
+  --accent: #38bdf8;
+  --accent-hover: #7dd3fc;
+  --accent-glow: rgba(56, 189, 248, 0.3);
+}
+
+/* ── Solarized Theme ──────────────────────────────────── */
+[data-theme="solarized"] {
+  --bg-primary: #002b36;
+  --bg-secondary: #073642;
+  --bg-tertiary: #0a4050;
+  --bg-elevated: #0d5060;
+  --accent: #b58900;
+  --accent-hover: #d4a017;
+  --accent-glow: rgba(181, 137, 0, 0.3);
+  --text-primary: #fdf6e3;
+  --text-secondary: #93a1a1;
+}
+
+/* ── Retro Terminal Theme ─────────────────────────────── */
+[data-theme="retro"] {
+  --bg-primary: #0c0c0c;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #222222;
+  --bg-elevated: #333333;
+  --accent: #33ff33;
+  --accent-hover: #66ff66;
+  --accent-glow: rgba(51, 255, 51, 0.3);
+  --text-primary: #33ff33;
+  --text-secondary: #22aa22;
+  --font-sans: 'JetBrains Mono', monospace;
+}
+
+/* ── Glass UI Theme ───────────────────────────────────── */
+[data-theme="glass"] {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: rgba(255, 255, 255, 0.05);
+  --bg-tertiary: rgba(255, 255, 255, 0.08);
+  --bg-elevated: rgba(255, 255, 255, 0.1);
+  --bg-glass: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Base Reset ───────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  background-image: 
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-position: center center;
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+::selection {
+  background: var(--accent);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Glass Card ───────────────────────────────────────── */
+.glass {
+  background: var(--bg-glass);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.glass-hover:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-accent);
+}
+
+/* ── Animations ───────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 4px var(--accent-glow); }
+  50% { box-shadow: 0 0 16px var(--accent-glow); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+.animate-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── React Flow Overrides ─────────────────────────────── */
+.react-flow__node {
+  cursor: grab !important;
+}
+.react-flow__node:active {
+  cursor: grabbing !important;
+}
+.react-flow__background {
+  background: var(--bg-primary) !important;
+}
+.react-flow__controls {
+  background: var(--bg-glass) !important;
+  backdrop-filter: blur(4px) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.react-flow__controls button {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-secondary) !important;
+  fill: var(--text-secondary) !important;
+}
+.react-flow__controls button:hover {
+  background: var(--accent-subtle) !important;
+  color: var(--accent) !important;
+  fill: var(--accent) !important;
+}
+.react-flow__minimap {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+}
+.react-flow__edge-path {
+  stroke: var(--accent) !important;
+  stroke-width: 2 !important;
+}

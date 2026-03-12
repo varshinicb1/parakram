@@ -1,0 +1,45 @@
+{
+    "id": "state_machine",
+    "name": "State Machine",
+    "category": "control",
+    "description": "Finite state machine for multi-state control logic.",
+    "inputs": [
+        {
+            "name": "trigger",
+            "data_type": "any",
+            "description": "Event or value triggering transitions"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "state",
+            "data_type": "int",
+            "description": "Current state index"
+        },
+        {
+            "name": "changed",
+            "data_type": "bool",
+            "description": "True on state transition"
+        }
+    ],
+    "configuration": [
+        {
+            "key": "states",
+            "label": "State Names",
+            "value_type": "string",
+            "default": "IDLE,RUNNING,ERROR"
+        },
+        {
+            "key": "initial_state",
+            "label": "Initial State",
+            "value_type": "int",
+            "default": "0"
+        }
+    ],
+    "firmware_template": {
+        "header": "#ifndef STATE_MACHINE_H\n#define STATE_MACHINE_H\n#include <Arduino.h>\n\nclass StateMachine {\npublic:\n    StateMachine(int numStates, int initialState = 0);\n    bool transition(int newState);\n    int getState() const;\n    bool hasChanged() const;\n    void clearChanged();\n    unsigned long getStateTime() const;\nprivate:\n    int _state;\n    int _numStates;\n    bool _changed;\n    unsigned long _stateEntryTime;\n};\n\n#endif",
+        "source": "#include \"state_machine.h\"\n\nStateMachine::StateMachine(int numStates, int initialState)\n    : _numStates(numStates), _state(initialState), _changed(false),\n      _stateEntryTime(millis()) {}\n\nbool StateMachine::transition(int newState) {\n    if (newState < 0 || newState >= _numStates || newState == _state) return false;\n    _state = newState;\n    _changed = true;\n    _stateEntryTime = millis();\n    return true;\n}\n\nint StateMachine::getState() const { return _state; }\nbool StateMachine::hasChanged() const { return _changed; }\nvoid StateMachine::clearChanged() { _changed = false; }\nunsigned long StateMachine::getStateTime() const {\n    return millis() - _stateEntryTime;\n}"
+    },
+    "icon": "git-branch",
+    "color": "#ec4899"
+}

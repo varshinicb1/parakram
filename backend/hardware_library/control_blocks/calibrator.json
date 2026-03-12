@@ -1,0 +1,40 @@
+{
+    "id": "calibrator",
+    "name": "Calibrator",
+    "category": "control",
+    "description": "Applies linear calibration (offset + scale) to a sensor reading.",
+    "inputs": [
+        {
+            "name": "raw",
+            "data_type": "float",
+            "description": "Raw sensor value"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "calibrated",
+            "data_type": "float",
+            "description": "Calibrated value"
+        }
+    ],
+    "configuration": [
+        {
+            "key": "offset",
+            "label": "Offset",
+            "value_type": "float",
+            "default": "0.0"
+        },
+        {
+            "key": "scale",
+            "label": "Scale Factor",
+            "value_type": "float",
+            "default": "1.0"
+        }
+    ],
+    "firmware_template": {
+        "header": "#ifndef CALIBRATOR_H\n#define CALIBRATOR_H\n#include <Arduino.h>\n\nclass Calibrator {\npublic:\n    Calibrator(float offset = 0.0f, float scale = 1.0f);\n    float apply(float raw);\n    void setCalibration(float offset, float scale);\nprivate:\n    float _offset, _scale;\n};\n\n#endif",
+        "source": "#include \"calibrator.h\"\n\nCalibrator::Calibrator(float offset, float scale)\n    : _offset(offset), _scale(scale) {}\n\nfloat Calibrator::apply(float raw) {\n    return (raw + _offset) * _scale;\n}\n\nvoid Calibrator::setCalibration(float offset, float scale) {\n    _offset = offset; _scale = scale;\n}"
+    },
+    "icon": "crosshair",
+    "color": "#a855f7"
+}

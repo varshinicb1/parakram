@@ -1,0 +1,74 @@
+{
+    "id": "pid_controller",
+    "name": "PID Controller",
+    "category": "control",
+    "description": "Proportional-Integral-Derivative controller for closed-loop feedback systems.",
+    "inputs": [
+        {
+            "name": "measurement",
+            "data_type": "float",
+            "description": "Current process value"
+        },
+        {
+            "name": "setpoint",
+            "data_type": "float",
+            "description": "Desired target value"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "output",
+            "data_type": "float",
+            "description": "Control output (0-100%)"
+        },
+        {
+            "name": "error",
+            "data_type": "float",
+            "description": "Current error value"
+        }
+    ],
+    "configuration": [
+        {
+            "key": "kp",
+            "label": "Proportional Gain",
+            "value_type": "float",
+            "default": "1.0"
+        },
+        {
+            "key": "ki",
+            "label": "Integral Gain",
+            "value_type": "float",
+            "default": "0.1"
+        },
+        {
+            "key": "kd",
+            "label": "Derivative Gain",
+            "value_type": "float",
+            "default": "0.05"
+        },
+        {
+            "key": "setpoint",
+            "label": "Default Setpoint",
+            "value_type": "float",
+            "default": "25.0"
+        },
+        {
+            "key": "output_min",
+            "label": "Output Min",
+            "value_type": "float",
+            "default": "0"
+        },
+        {
+            "key": "output_max",
+            "label": "Output Max",
+            "value_type": "float",
+            "default": "100"
+        }
+    ],
+    "firmware_template": {
+        "header": "#ifndef PID_CONTROLLER_H\n#define PID_CONTROLLER_H\n#include <Arduino.h>\n\nclass PIDController {\npublic:\n    PIDController(float kp, float ki, float kd, float setpoint = 0.0f);\n    float compute(float measurement);\n    void setTunings(float kp, float ki, float kd);\n    void setSetpoint(float sp);\n    void setOutputLimits(float min, float max);\n    void reset();\n    float getError() const;\nprivate:\n    float _kp, _ki, _kd;\n    float _setpoint;\n    float _integral, _prevError;\n    float _outMin, _outMax;\n    unsigned long _lastTime;\n};\n\n#endif",
+        "source": "#include \"pid_controller.h\"\n\nPIDController::PIDController(float kp, float ki, float kd, float setpoint)\n    : _kp(kp), _ki(ki), _kd(kd), _setpoint(setpoint),\n      _integral(0), _prevError(0), _outMin(0), _outMax(100),\n      _lastTime(0) {}\n\nfloat PIDController::compute(float measurement) {\n    unsigned long now = millis();\n    float dt = (_lastTime == 0) ? 0.1f : (now - _lastTime) / 1000.0f;\n    _lastTime = now;\n    if (dt <= 0) dt = 0.001f;\n\n    float error = _setpoint - measurement;\n    _integral += error * dt;\n    float derivative = (error - _prevError) / dt;\n    _prevError = error;\n\n    float output = _kp * error + _ki * _integral + _kd * derivative;\n    return constrain(output, _outMin, _outMax);\n}\n\nvoid PIDController::setTunings(float kp, float ki, float kd) {\n    _kp = kp; _ki = ki; _kd = kd;\n}\n\nvoid PIDController::setSetpoint(float sp) { _setpoint = sp; }\n\nvoid PIDController::setOutputLimits(float min, float max) {\n    _outMin = min; _outMax = max;\n}\n\nvoid PIDController::reset() {\n    _integral = 0; _prevError = 0; _lastTime = 0;\n}\n\nfloat PIDController::getError() const { return _prevError; }"
+    },
+    "icon": "sliders",
+    "color": "#f59e0b"
+}

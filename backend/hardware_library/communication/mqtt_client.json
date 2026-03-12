@@ -1,0 +1,71 @@
+{
+  "id": "mqtt_client",
+  "name": "MQTT Client",
+  "category": "communication",
+  "description": "MQTT client for publishing sensor data and subscribing to commands. Requires WiFi connection.",
+  "inputs": [
+    {
+      "name": "data",
+      "data_type": "any",
+      "description": "Data to publish"
+    },
+    {
+      "name": "wifi_connected",
+      "data_type": "bool",
+      "description": "WiFi status"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "message",
+      "data_type": "string",
+      "description": "Received MQTT message"
+    },
+    {
+      "name": "connected",
+      "data_type": "bool",
+      "description": "MQTT connection status"
+    }
+  ],
+  "configuration": [
+    {
+      "key": "broker",
+      "label": "MQTT Broker",
+      "value_type": "string",
+      "default": "",
+      "description": "MQTT broker address"
+    },
+    {
+      "key": "port",
+      "label": "Port",
+      "value_type": "int",
+      "default": "1883",
+      "description": "MQTT broker port"
+    },
+    {
+      "key": "topic_publish",
+      "label": "Publish Topic",
+      "value_type": "string",
+      "default": "parakram/data",
+      "description": "Topic to publish data"
+    },
+    {
+      "key": "topic_subscribe",
+      "label": "Subscribe Topic",
+      "value_type": "string",
+      "default": "parakram/cmd",
+      "description": "Topic to listen for commands"
+    }
+  ],
+  "code_template": "mqtt_template",
+  "icon": "cloud",
+  "color": "#06b6d4",
+  "libraries": [
+    "knolleary/PubSubClient@^2.8"
+  ],
+  "pins_required": {},
+  "firmware_template": {
+    "header": "#ifndef MQTT_CLIENT_H\n#define MQTT_CLIENT_H\n\n#include <WiFi.h>\n#include <PubSubClient.h>\n\nclass MqttClient {\npublic:\n    void setup(const char* ssid, const char* password, const char* broker, int port, const char* topic_publish, const char* topic_subscribe);\n    void loop();\n    String getMessage() const;\n    bool isConnected() const;\n\nprivate:\n    WiFiClient espClient;\n    PubSubClient client(espClient);\n    const char* ssid;\n    const char* password;\n    const char* broker;\n    int port;\n    const char* topic_publish;\n    const char* topic_subscribe;\n    String message;\n    bool connected = false;\n};\n\n#endif // MQTT_CLIENT_H",
+    "source": "#include \"mqtt_client.h\"\n\nvoid MqttClient::setup(const char* ssid, const char* password, const char* broker, int port, const char* topic_publish, const char* topic_subscribe) {\n    this->ssid = ssid;\n    this->password = password;\n    this->broker = broker;\n    this->port = port;\n    this->topic_publish = topic_publish;\n    this->topic_subscribe = topic_subscribe;\n\n    WiFi.begin(ssid, password);\n    while (WiFi.status() != WL_CONNECTED) {\n        delay(1000);\n        Serial.println(\"[mqtt_client] Connecting to WiFi...\");\n    }\n    Serial.println(\"[mqtt_client] Connected to WiFi\");\n\n    client.setServer(broker, port);\n    client.setCallback([](char* topic, byte* payload, unsigned int length) {\n        // Handle incoming messages here\n    });\n}\n\nvoid MqttClient::loop() {\n    if (!client.connected()) {\n        reconnect();\n    }\n    client.loop();\n\n    if (client.connected()) {\n        // Publish data or handle subscriptions as needed\n    }\n}\n\nString MqttClient::getMessage() const {\n    return message;\n}\n\nbool MqttClient::isConnected() const {\n    return connected;\n}\n\nvoid MqttClient::reconnect() {\n    while (!client.connected()) {\n        Serial.println(\"[mqtt_client] Attempting MQTT connection...\");\n        if (client.connect(\"ESP32Client\")) {\n            Serial.println(\"[mqtt_client] Connected to MQTT broker\");\n            client.subscribe(topic_subscribe);\n            connected = true;\n        } else {\n            Serial.print(\"[mqtt_client] Failed, rc=\");\n            Serial.print(client.state());\n            Serial.println(\" try again in 5 seconds\");\n            delay(5000);\n        }\n    }\n}"
+  }
+}

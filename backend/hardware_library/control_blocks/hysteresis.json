@@ -1,0 +1,40 @@
+{
+    "id": "hysteresis",
+    "name": "Hysteresis",
+    "category": "control",
+    "description": "Prevents output oscillation using separate on/off thresholds (Schmitt trigger).",
+    "inputs": [
+        {
+            "name": "value",
+            "data_type": "float",
+            "description": "Input measurement"
+        }
+    ],
+    "outputs": [
+        {
+            "name": "active",
+            "data_type": "bool",
+            "description": "True when above high threshold, false when below low"
+        }
+    ],
+    "configuration": [
+        {
+            "key": "high_threshold",
+            "label": "High Threshold (ON)",
+            "value_type": "float",
+            "default": "30.0"
+        },
+        {
+            "key": "low_threshold",
+            "label": "Low Threshold (OFF)",
+            "value_type": "float",
+            "default": "25.0"
+        }
+    ],
+    "firmware_template": {
+        "header": "#ifndef HYSTERESIS_H\n#define HYSTERESIS_H\n#include <Arduino.h>\n\nclass Hysteresis {\npublic:\n    Hysteresis(float highThreshold, float lowThreshold);\n    bool update(float value);\n    bool getState() const;\n    void setThresholds(float high, float low);\nprivate:\n    float _high, _low;\n    bool _state;\n};\n\n#endif",
+        "source": "#include \"hysteresis.h\"\n\nHysteresis::Hysteresis(float highThreshold, float lowThreshold)\n    : _high(highThreshold), _low(lowThreshold), _state(false) {}\n\nbool Hysteresis::update(float value) {\n    if (_state && value < _low) _state = false;\n    else if (!_state && value > _high) _state = true;\n    return _state;\n}\n\nbool Hysteresis::getState() const { return _state; }\n\nvoid Hysteresis::setThresholds(float high, float low) {\n    _high = high; _low = low;\n}"
+    },
+    "icon": "toggle-right",
+    "color": "#10b981"
+}

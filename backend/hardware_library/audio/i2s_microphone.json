@@ -1,0 +1,73 @@
+{
+    "id": "i2s_microphone",
+    "name": "I2S Microphone",
+    "category": "audio",
+    "description": "INMP441/SPH0645 I2S digital microphone with configurable sample rate.",
+    "inputs": [],
+    "outputs": [
+        {
+            "name": "audio_data",
+            "data_type": "any",
+            "description": "Raw audio buffer"
+        },
+        {
+            "name": "rms_level",
+            "data_type": "float",
+            "description": "RMS amplitude"
+        },
+        {
+            "name": "peak",
+            "data_type": "float",
+            "description": "Peak amplitude"
+        }
+    ],
+    "configuration": [
+        {
+            "key": "bck_pin",
+            "label": "BCK Pin",
+            "value_type": "int",
+            "default": "26"
+        },
+        {
+            "key": "ws_pin",
+            "label": "WS Pin",
+            "value_type": "int",
+            "default": "25"
+        },
+        {
+            "key": "data_pin",
+            "label": "Data Pin",
+            "value_type": "int",
+            "default": "22"
+        },
+        {
+            "key": "sample_rate",
+            "label": "Sample Rate",
+            "value_type": "int",
+            "default": "16000"
+        },
+        {
+            "key": "bits_per_sample",
+            "label": "Bits/Sample",
+            "value_type": "int",
+            "default": "32"
+        },
+        {
+            "key": "buffer_size",
+            "label": "Buffer Size",
+            "value_type": "int",
+            "default": "1024"
+        }
+    ],
+    "libraries": [],
+    "firmware_template": {
+        "header": "#ifndef I2S_MICROPHONE_H\n#define I2S_MICROPHONE_H\n#include <Arduino.h>\n#include <driver/i2s.h>\n\nvoid i2s_mic_setup();\nvoid i2s_mic_loop();\nfloat i2s_mic_get_rms();\nfloat i2s_mic_get_peak();\nint32_t* i2s_mic_get_buffer();\nsize_t i2s_mic_get_samples_read();\n\n#endif",
+        "source": "#include \"i2s_microphone.h\"\n#include \"config.h\"\n\n#define I2S_MIC_PORT I2S_NUM_0\n#define I2S_BUFFER_SIZE 1024\n\nstatic int32_t _micBuffer[I2S_BUFFER_SIZE];\nstatic size_t _samplesRead = 0;\nstatic float _rmsLevel = 0.0f;\nstatic float _peakLevel = 0.0f;\n\nvoid i2s_mic_setup() {\n    i2s_config_t i2s_config = {\n        .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),\n        .sample_rate = 16000,\n        .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,\n        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,\n        .communication_format = I2S_COMM_FORMAT_STAND_I2S,\n        .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,\n        .dma_buf_count = 4,\n        .dma_buf_len = I2S_BUFFER_SIZE,\n        .use_apll = false,\n        .tx_desc_auto_clear = false,\n        .fixed_mclk = 0\n    };\n    i2s_pin_config_t pin_config = {\n        .bck_io_num = 26,\n        .ws_io_num = 25,\n        .data_out_num = I2S_PIN_NO_CHANGE,\n        .data_in_num = 22\n    };\n    i2s_driver_install(I2S_MIC_PORT, &i2s_config, 0, NULL);\n    i2s_set_pin(I2S_MIC_PORT, &pin_config);\n    Serial.println(\"[i2s-mic] INMP441 ready @ 16kHz\");\n}\n\nvoid i2s_mic_loop() {\n    size_t bytesRead = 0;\n    i2s_read(I2S_MIC_PORT, _micBuffer, sizeof(_micBuffer), &bytesRead, portMAX_DELAY);\n    _samplesRead = bytesRead / sizeof(int32_t);\n    \n    // Calculate RMS and peak\n    float sumSq = 0;\n    _peakLevel = 0;\n    for (size_t i = 0; i < _samplesRead; i++) {\n        float sample = (float)(_micBuffer[i] >> 14) / 32768.0f;\n        sumSq += sample * sample;\n        float absSample = fabs(sample);\n        if (absSample > _peakLevel) _peakLevel = absSample;\n    }\n    _rmsLevel = sqrt(sumSq / _samplesRead);\n}\n\nfloat i2s_mic_get_rms() { return _rmsLevel; }\nfloat i2s_mic_get_peak() { return _peakLevel; }\nint32_t* i2s_mic_get_buffer() { return _micBuffer; }\nsize_t i2s_mic_get_samples_read() { return _samplesRead; }"
+    },
+    "icon": "🎤",
+    "color": "#e11d48",
+    "memory_estimate": {
+        "flash": 8000,
+        "sram": 8192
+    }
+}
