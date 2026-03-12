@@ -278,8 +278,8 @@ class OpenRouterProvider:
 
             headers = {
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://parakram.dev",
-                "X-Title": "Parakram AI",
+                "HTTP-Referer": "https://vidyutlabs.com",
+                "X-Title": "Parakram by Vidyutlabs",
             }
             if self.api_key:
                 headers["Authorization"] = f"Bearer {self.api_key}"

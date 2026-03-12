@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { useAppStore, type Space } from '../stores/appStore';
 import {
   Home, Folder, Box, Cpu, Activity, Settings, Bug, Hexagon,
-  Monitor, ClipboardCheck, Shield, LogIn, Download
+  Monitor, ClipboardCheck, Shield, LogIn, Download, Puzzle
 } from 'lucide-react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,6 +19,7 @@ const spaces: { id: Space; icon: any; label: string }[] = [
   { id: 'verification', icon: ClipboardCheck, label: 'Verify' },
   { id: 'telemetry', icon: Activity, label: 'Telemetry' },
   { id: 'installer', icon: Download, label: 'Installer' },
+  { id: 'extensions', icon: Puzzle, label: 'Extensions' },
   { id: 'settings', icon: Settings, label: 'Settings' },
   { id: 'debug', icon: Bug, label: 'Debug' },
 ];

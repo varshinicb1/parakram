@@ -4,7 +4,7 @@
  */
 import { create } from 'zustand';
 
-export type Space = 'home' | 'workspace' | 'blocks' | 'devices' | 'telemetry' | 'settings' | 'debug' | 'simulator' | 'verification' | 'admin' | 'auth' | 'installer';
+export type Space = 'home' | 'workspace' | 'blocks' | 'devices' | 'telemetry' | 'settings' | 'debug' | 'simulator' | 'verification' | 'admin' | 'auth' | 'installer' | 'extensions';
 export type Theme = 'dark-lab' | 'cyberpunk' | 'midnight' | 'solarized' | 'retro' | 'glass';
 
 export interface Project {

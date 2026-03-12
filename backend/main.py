@@ -24,6 +24,19 @@ from api.auth_routes import router as auth_router
 from api.admin_routes import router as admin_router
 from api.git_routes import router as git_router
 from api.installer_routes import router as installer_router
+from api.extension_routes import router as extension_router
+from api.agent_v2_routes import router as agent_v2_router
+from api.analysis_routes import router as analysis_router
+from api.workspace_routes import router as workspace_router
+from api.ota_power_routes import router as ota_power_router
+from api.subscription_routes import router as subscription_router
+from api.gallery_routes import router as gallery_router
+from api.board_export_routes import router as board_export_router
+from api.realtime_routes import router as realtime_router
+from api.marketplace_routes import router as marketplace_router
+from api.snippet_routes import router as snippet_router
+from api.signup_routes import router as signup_router
+from api.docs_routes import router as docs_router
 
 load_dotenv()
 
@@ -60,6 +73,19 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(admin_router, prefix="/api/admin", tags=["Admin Console"])
 app.include_router(git_router, prefix="/api/git", tags=["Git Version Control"])
 app.include_router(installer_router, prefix="/api/installer", tags=["Installer"])
+app.include_router(extension_router, prefix="/api/extensions", tags=["Extensions"])
+app.include_router(agent_v2_router, prefix="/api/agent/v2", tags=["Autonomous Agent"])
+app.include_router(analysis_router, prefix="/api/analysis", tags=["Analysis Tools"])
+app.include_router(workspace_router, prefix="/api/workspace", tags=["Workspace"])
+app.include_router(ota_power_router, prefix="/api/tools", tags=["OTA & Power"])
+app.include_router(subscription_router, prefix="/api/billing", tags=["Billing & Plans"])
+app.include_router(gallery_router, prefix="/api/gallery", tags=["Gallery & Crash"])
+app.include_router(board_export_router, prefix="/api/hardware", tags=["Board DB & Export"])
+app.include_router(realtime_router, prefix="/api/rt", tags=["Realtime & Memory"])
+app.include_router(marketplace_router, prefix="/api/store", tags=["Marketplace & Wiring"])
+app.include_router(snippet_router, prefix="/api/code", tags=["Code Snippets"])
+app.include_router(signup_router, prefix="/api/users", tags=["Signup & Downloads"])
+app.include_router(docs_router, prefix="", tags=["Documentation"])
 
 
 @app.get("/")

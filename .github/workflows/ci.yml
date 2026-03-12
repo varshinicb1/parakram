@@ -1,0 +1,130 @@
+name: Parakram OS CI/CD
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Backend Tests ────────────────────────────────────────
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt
+      - run: pip install pytest httpx
+      - name: Lint
+        run: python -m py_compile main.py
+      - name: Test imports
+        run: |
+          python -c "
+          from main import app
+          from agents.autonomous_agent import AutonomousFirmwareAgent
+          from agents.chip_knowledge_base import ChipKnowledgeBase
+          from agents.board_database import list_all_boards
+          from agents.misra_checker import get_misra_checker
+          from agents.datasheet_parser import get_datasheet_parser
+          from services.extension_manager import get_extension_manager
+          from services.protocol_decoder import get_protocol_analyzer
+          from services.project_planner import get_project_planner
+          from services.power_profiler import get_power_profiler
+          from services.ota_manager import get_ota_manager
+          from services.subscription_manager import get_subscription_manager
+          from services.crash_decoder import get_crash_decoder
+          from services.project_gallery import get_gallery_templates
+          from services.project_exporter import get_project_exporter
+          print('All imports successful')
+          "
+      - name: Test MISRA Checker
+        run: |
+          python -c "
+          from agents.misra_checker import get_misra_checker
+          checker = get_misra_checker()
+          code = '#include <stdio.h>\nint main() { int* p = malloc(sizeof(int)); printf(\"hello\"); }'
+          violations = checker.analyze(code, 'test.c')
+          score = checker.get_compliance_score(violations)
+          assert len(violations) > 0, 'Expected MISRA violations'
+          assert score['score'] < 100, 'Expected non-perfect score with violations'
+          print(f'MISRA: {len(violations)} violations, score={score[\"score\"]}%, grade={score[\"grade\"]}')
+          "
+      - name: Test Board Database
+        run: |
+          python -c "
+          from agents.board_database import list_all_boards, get_board, search_boards
+          boards = list_all_boards()
+          assert len(boards) >= 25, f'Expected 25+ boards, got {len(boards)}'
+          esp32 = get_board('esp32dev')
+          assert esp32 is not None, 'ESP32 should exist'
+          assert esp32['wifi'] == True, 'ESP32 should have WiFi'
+          wifi_boards = search_boards(has_wifi=True)
+          assert len(wifi_boards) > 0, 'Should find WiFi boards'
+          print(f'Board DB: {len(boards)} boards, {len(wifi_boards)} with WiFi')
+          "
+      - name: Test Project Planner
+        run: |
+          python -c "
+          from services.project_planner import get_project_planner
+          planner = get_project_planner()
+          plan = planner.plan_from_prompt('Build a weather station with ESP32 and BME280')
+          assert plan.get('project_name'), 'Should have project name'
+          assert len(plan.get('components', [])) > 0, 'Should have components'
+          print(f'Planner: {plan[\"project_name\"]}, {len(plan[\"components\"])} components')
+          "
+      - name: Test Crash Decoder
+        run: |
+          python -c "
+          from services.crash_decoder import get_crash_decoder
+          decoder = get_crash_decoder()
+          dump = 'Guru Meditation Error: Core  0 panic (LoadProhibited). Exception was unhandled.\nPC: 0x400d1234\nEXCVADDR: 0x00000000\nEXCCAUSE: 3'
+          result = decoder.decode(dump)
+          assert result['platform'] == 'esp32'
+          assert len(result['suggestions']) > 0
+          print(f'Crash: {result[\"platform\"]}, {len(result[\"suggestions\"])} suggestions')
+          "
+
+  # ── Frontend Build ───────────────────────────────────────
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Check bundle size
+        run: |
+          SIZE=$(du -sk dist | cut -f1)
+          echo "Bundle size: ${SIZE}KB"
+          if [ $SIZE -gt 10240 ]; then
+            echo "⚠️ Bundle exceeds 10MB"
+          fi
+
+  # ── Docker Build ─────────────────────────────────────────
+  docker:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: parakram-os:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
