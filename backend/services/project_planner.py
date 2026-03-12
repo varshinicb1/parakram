@@ -67,46 +67,46 @@ class ProjectPlan:
 
 COMPONENT_DB = {
     # MCU boards
-    "esp32": Component("ESP32 DevKit V1", "mcu", cost_usd=5.0, interface="—", voltage="3.3V/5V", current_ma=240),
-    "esp32-s3": Component("ESP32-S3 DevKitC", "mcu", cost_usd=8.0, interface="—", voltage="3.3V/5V", current_ma=310),
-    "stm32f4": Component("STM32F446RE Nucleo", "mcu", cost_usd=15.0, interface="—", voltage="3.3V", current_ma=150),
-    "rp2040": Component("Raspberry Pi Pico", "mcu", cost_usd=4.0, interface="—", voltage="3.3V", current_ma=100),
-    "arduino": Component("Arduino Mega 2560", "mcu", cost_usd=12.0, interface="—", voltage="5V", current_ma=200),
+    "esp32": Component("ESP32 DevKit V1", "mcu", estimated_cost_usd=5.0, interface="—", voltage="3.3V/5V", current_ma=240),
+    "esp32-s3": Component("ESP32-S3 DevKitC", "mcu", estimated_cost_usd=8.0, interface="—", voltage="3.3V/5V", current_ma=310),
+    "stm32f4": Component("STM32F446RE Nucleo", "mcu", estimated_cost_usd=15.0, interface="—", voltage="3.3V", current_ma=150),
+    "rp2040": Component("Raspberry Pi Pico", "mcu", estimated_cost_usd=4.0, interface="—", voltage="3.3V", current_ma=100),
+    "arduino": Component("Arduino Mega 2560", "mcu", estimated_cost_usd=12.0, interface="—", voltage="5V", current_ma=200),
 
     # Sensors
-    "bme280": Component("BME280", "sensor", cost_usd=3.0, interface="I2C/SPI", voltage="3.3V", current_ma=0.6),
-    "mpu6050": Component("MPU6050", "sensor", cost_usd=2.0, interface="I2C", voltage="3.3V", current_ma=3.9),
-    "dht22": Component("DHT22", "sensor", cost_usd=3.0, interface="GPIO", voltage="3.3-5V", current_ma=1.5),
-    "bmp390": Component("BMP390", "sensor", cost_usd=5.0, interface="I2C/SPI", voltage="3.3V", current_ma=0.7),
-    "vl53l0x": Component("VL53L0X ToF", "sensor", cost_usd=4.0, interface="I2C", voltage="3.3-5V", current_ma=19),
-    "ads1115": Component("ADS1115 ADC", "sensor", cost_usd=5.0, interface="I2C", voltage="3.3-5V", current_ma=0.15),
-    "ina219": Component("INA219 Current", "sensor", cost_usd=3.0, interface="I2C", voltage="3.3-5V", current_ma=1),
-    "hx711": Component("HX711 Load Cell", "sensor", cost_usd=2.0, interface="GPIO", voltage="3.3-5V", current_ma=1.5),
-    "max31855": Component("MAX31855 Thermocouple", "sensor", cost_usd=8.0, interface="SPI", voltage="3.3V", current_ma=1.5),
-    "gps": Component("NEO-6M GPS", "sensor", cost_usd=8.0, interface="UART", voltage="3.3-5V", current_ma=45),
-    "ultrasonic": Component("HC-SR04", "sensor", cost_usd=1.5, interface="GPIO", voltage="5V", current_ma=15),
-    "rfid": Component("MFRC522", "sensor", cost_usd=3.0, interface="SPI", voltage="3.3V", current_ma=13),
-    "pir": Component("HC-SR501 PIR", "sensor", cost_usd=1.0, interface="GPIO", voltage="5V", current_ma=0.065),
+    "bme280": Component("BME280", "sensor", estimated_cost_usd=3.0, interface="I2C/SPI", voltage="3.3V", current_ma=0.6),
+    "mpu6050": Component("MPU6050", "sensor", estimated_cost_usd=2.0, interface="I2C", voltage="3.3V", current_ma=3.9),
+    "dht22": Component("DHT22", "sensor", estimated_cost_usd=3.0, interface="GPIO", voltage="3.3-5V", current_ma=1.5),
+    "bmp390": Component("BMP390", "sensor", estimated_cost_usd=5.0, interface="I2C/SPI", voltage="3.3V", current_ma=0.7),
+    "vl53l0x": Component("VL53L0X ToF", "sensor", estimated_cost_usd=4.0, interface="I2C", voltage="3.3-5V", current_ma=19),
+    "ads1115": Component("ADS1115 ADC", "sensor", estimated_cost_usd=5.0, interface="I2C", voltage="3.3-5V", current_ma=0.15),
+    "ina219": Component("INA219 Current", "sensor", estimated_cost_usd=3.0, interface="I2C", voltage="3.3-5V", current_ma=1),
+    "hx711": Component("HX711 Load Cell", "sensor", estimated_cost_usd=2.0, interface="GPIO", voltage="3.3-5V", current_ma=1.5),
+    "max31855": Component("MAX31855 Thermocouple", "sensor", estimated_cost_usd=8.0, interface="SPI", voltage="3.3V", current_ma=1.5),
+    "gps": Component("NEO-6M GPS", "sensor", estimated_cost_usd=8.0, interface="UART", voltage="3.3-5V", current_ma=45),
+    "ultrasonic": Component("HC-SR04", "sensor", estimated_cost_usd=1.5, interface="GPIO", voltage="5V", current_ma=15),
+    "rfid": Component("MFRC522", "sensor", estimated_cost_usd=3.0, interface="SPI", voltage="3.3V", current_ma=13),
+    "pir": Component("HC-SR501 PIR", "sensor", estimated_cost_usd=1.0, interface="GPIO", voltage="5V", current_ma=0.065),
 
     # Displays
-    "oled": Component("SSD1306 0.96\" OLED", "display", cost_usd=4.0, interface="I2C", voltage="3.3-5V", current_ma=20),
-    "tft": Component("ILI9341 2.4\" TFT", "display", cost_usd=6.0, interface="SPI", voltage="3.3V", current_ma=80),
-    "lcd": Component("16x2 I2C LCD", "display", cost_usd=3.0, interface="I2C", voltage="5V", current_ma=25),
-    "epaper": Component("2.9\" E-Paper", "display", cost_usd=12.0, interface="SPI", voltage="3.3V", current_ma=8),
+    "oled": Component("SSD1306 0.96\" OLED", "display", estimated_cost_usd=4.0, interface="I2C", voltage="3.3-5V", current_ma=20),
+    "tft": Component("ILI9341 2.4\" TFT", "display", estimated_cost_usd=6.0, interface="SPI", voltage="3.3V", current_ma=80),
+    "lcd": Component("16x2 I2C LCD", "display", estimated_cost_usd=3.0, interface="I2C", voltage="5V", current_ma=25),
+    "epaper": Component("2.9\" E-Paper", "display", estimated_cost_usd=12.0, interface="SPI", voltage="3.3V", current_ma=8),
 
     # Actuators
-    "relay": Component("5V Relay Module", "actuator", cost_usd=1.5, interface="GPIO", voltage="5V", current_ma=72),
-    "servo": Component("SG90 Micro Servo", "actuator", cost_usd=2.0, interface="PWM", voltage="5V", current_ma=250),
-    "stepper": Component("28BYJ-48 + ULN2003", "actuator", cost_usd=3.0, interface="GPIO", voltage="5V", current_ma=240),
-    "motor": Component("DC Motor + L298N", "actuator", cost_usd=5.0, interface="PWM", voltage="5-12V", current_ma=2000),
-    "neopixel": Component("WS2812B LED Strip", "actuator", cost_usd=8.0, interface="GPIO", voltage="5V", current_ma=60),
-    "buzzer": Component("Piezo Buzzer", "actuator", cost_usd=0.5, interface="GPIO", voltage="3.3-5V", current_ma=30),
+    "relay": Component("5V Relay Module", "actuator", estimated_cost_usd=1.5, interface="GPIO", voltage="5V", current_ma=72),
+    "servo": Component("SG90 Micro Servo", "actuator", estimated_cost_usd=2.0, interface="PWM", voltage="5V", current_ma=250),
+    "stepper": Component("28BYJ-48 + ULN2003", "actuator", estimated_cost_usd=3.0, interface="GPIO", voltage="5V", current_ma=240),
+    "motor": Component("DC Motor + L298N", "actuator", estimated_cost_usd=5.0, interface="PWM", voltage="5-12V", current_ma=2000),
+    "neopixel": Component("WS2812B LED Strip", "actuator", estimated_cost_usd=8.0, interface="GPIO", voltage="5V", current_ma=60),
+    "buzzer": Component("Piezo Buzzer", "actuator", estimated_cost_usd=0.5, interface="GPIO", voltage="3.3-5V", current_ma=30),
 
     # Communication
-    "lora": Component("SX1276 LoRa Module", "communication", cost_usd=10.0, interface="SPI", voltage="3.3V", current_ma=120),
-    "ethernet": Component("W5500 Ethernet", "communication", cost_usd=6.0, interface="SPI", voltage="3.3V", current_ma=132),
-    "can": Component("MCP2515 CAN", "communication", cost_usd=4.0, interface="SPI", voltage="5V", current_ma=5),
-    "sd_card": Component("MicroSD Module", "storage", cost_usd=1.5, interface="SPI", voltage="3.3-5V", current_ma=80),
+    "lora": Component("SX1276 LoRa Module", "communication", estimated_cost_usd=10.0, interface="SPI", voltage="3.3V", current_ma=120),
+    "ethernet": Component("W5500 Ethernet", "communication", estimated_cost_usd=6.0, interface="SPI", voltage="3.3V", current_ma=132),
+    "can": Component("MCP2515 CAN", "communication", estimated_cost_usd=4.0, interface="SPI", voltage="5V", current_ma=5),
+    "sd_card": Component("MicroSD Module", "storage", estimated_cost_usd=1.5, interface="SPI", voltage="3.3-5V", current_ma=80),
 }
 
 
