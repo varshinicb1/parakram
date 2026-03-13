@@ -119,12 +119,17 @@ async def run_tests():
 
             # 2) Generate code
             session = await agent.execute(prompt)
-            code = session.files.get("main.cpp", "")
-            result["details"]["code_length"] = len(code)
-            print(f"  Code: {len(code)} characters generated")
+            # Aggregate all code from all files (not just main.cpp)
+            all_code = "\n".join(
+                content for fname, content in session.files.items()
+                if fname != "platformio.ini"
+            )
+            code = session.files.get("main.cpp", all_code)
+            result["details"]["code_length"] = len(all_code)
+            print(f"  Code: {len(all_code)} characters generated")
 
-            # 3) Check keywords
-            found = [kw for kw in test["expected_keywords"] if kw.lower() in code.lower()]
+            # 3) Check keywords across ALL generated files
+            found = [kw for kw in test["expected_keywords"] if kw.lower() in all_code.lower()]
             keyword_pct = len(found) / len(test["expected_keywords"]) * 100 if test["expected_keywords"] else 100
             print(f"  Keywords: {len(found)}/{len(test['expected_keywords'])} ({keyword_pct:.0f}%)")
             result["details"]["keywords"] = {"found": found, "percent": keyword_pct}

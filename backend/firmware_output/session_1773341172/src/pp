@@ -1,0 +1,6 @@
+// Configure GPIO pins for CAN bus
+pinMode(CAN_RX_PIN, INPUT);
+pinMode(CAN_TX_PIN, OUTPUT);
+
+// Configure clock for CAN bus
+RCC->APB1ENR |= RCC_APB1ENR_CANEN;

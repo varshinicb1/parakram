@@ -1,0 +1,27 @@
+#include <Adafruit_NeoPixel.h>
+#include <pio.h>
+#include <hardware/clocks.h>
+
+// Define the class Adafruit_NeoPixel_RP2
+class Adafruit_NeoPixel_RP2 : public Adafruit_NeoPixel {
+public:
+  void begin();
+  void end();
+};
+
+void Adafruit_NeoPixel_RP2::begin() {
+  // Claim a state machine and add the WS2812 program
+  uint sm_config = pio_add_program(pio0, &ws2812_program);
+  uint sm = pio_claim_unused_sm(pio0, true);
+  pio_sm_config c = ws2812_program_get_default_config(sm_config);
+  sm_config_set_out_shift(&c, false, true, 0);
+  sm_config_set_sideset(&c, 1, false, false);
+  pio_sm_init(pio0, sm, sm_config, &c);
+  pio_sm_set_enabled(pio0, sm, true);
+}
+
+void Adafruit_NeoPixel_RP2::end() {
+  // Remove the program and unclaim the state machine
+  pio_remove_program(pio0, &ws2812_program, sm);
+  pio_sm_unclaim(pio0, sm);
+}
