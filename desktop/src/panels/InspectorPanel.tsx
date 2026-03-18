@@ -45,10 +45,10 @@ export default function InspectorPanel({ node, onClose }: Props) {
       <div className="flex items-center justify-between px-4 py-3 border-b"
         style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-none animate-pulse" style={{ background: color, boxShadow: `0 0 10px ${color}` }} />
-          <h2 className="text-[11px] font-bold tracking-widest uppercase" style={{ color: 'var(--text-primary)' }}>{name}</h2>
+          <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{name}</h2>
         </div>
-        <button onClick={onClose} className="p-1 rounded-none transition-colors hover:bg-white/5 border border-transparent hover:border-[var(--border)]"
+        <button onClick={onClose} className="p-1 rounded-md transition-colors hover:bg-white/5 border border-transparent hover:border-[var(--border)]"
           style={{ color: 'var(--text-muted)' }}>
           <X size={14} />
         </button>
@@ -58,7 +58,7 @@ export default function InspectorPanel({ node, onClose }: Props) {
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-4">
         {/* Category badge */}
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded-none border text-[9px] font-bold uppercase tracking-widest"
+          <span className="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider"
             style={{ background: `${color}10`, color, borderColor: `${color}30` }}>
             {category}
           </span>
@@ -71,54 +71,54 @@ export default function InspectorPanel({ node, onClose }: Props) {
 
         {/* Configuration */}
         <div>
-          <h3 className="flex items-center gap-1.5 text-[10px] tracking-widest uppercase font-bold mb-3"
+          <h3 className="flex items-center gap-2 text-xs font-semibold mb-3"
             style={{ color: 'var(--text-secondary)' }}>
-            <Settings2 size={12} /> HARDWARE CONFIGURATION
+            <Settings2 size={14} /> Hardware Configuration
           </h3>
           <div className="flex flex-col gap-2">
             {Object.entries(config).length > 0 ? (
               Object.entries(config).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between glass px-3 py-2 rounded-none border-l-2" style={{ borderLeftColor: 'var(--border)' }}>
-                  <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'var(--text-secondary)' }}>{key}</span>
+                <div key={key} className="flex items-center justify-between bg-[var(--bg-tertiary)] px-3 py-2 rounded-lg border shadow-sm" style={{ borderColor: 'var(--border)' }}>
+                  <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>{key}</span>
                   <input
                     type="text"
                     defaultValue={String(value)}
-                    className="w-24 text-right bg-transparent outline-none text-[10px] font-mono px-2 py-1 rounded-none uppercase"
+                    className="w-24 text-right bg-transparent outline-none text-[11px] font-mono px-2 py-1 rounded uppercase"
                     style={{
                       color: 'var(--text-primary)',
-                      background: 'var(--bg-tertiary)',
+                      background: 'var(--bg-primary)',
                       border: '1px solid var(--border)',
                     }}
                   />
                 </div>
               ))
             ) : (
-              <p className="text-[10px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>NO CONFIGURATION REQUIRED</p>
+              <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>No configuration required.</p>
             )}
           </div>
         </div>
 
         {/* AI Actions */}
         <div className="mt-4">
-          <h3 className="flex items-center gap-1.5 text-[10px] tracking-widest uppercase font-bold mb-3"
+          <h3 className="flex items-center gap-2 text-xs font-semibold mb-3"
             style={{ color: 'var(--text-secondary)' }}>
-            <Sparkles size={12} /> AI ASSISTANT PROTOCOLS
+            <Sparkles size={14} /> AI Assistant Protocols
           </h3>
-          <div className="flex flex-col gap-1.5">
-            <button className="glass glass-hover flex items-center gap-3 px-3 py-2.5 rounded-none border-l-2 text-[10px] tracking-widest uppercase font-bold text-left transition-all"
-              style={{ color: 'var(--text-primary)', borderLeftColor: 'transparent' }}>
-              <Sparkles size={12} style={{ color: 'var(--accent)' }} />
-              EXPLAIN COMPONENT
+          <div className="flex flex-col gap-2">
+            <button className="flex items-center gap-3 px-3 py-3 rounded-xl border text-xs font-semibold text-left transition-all hover:bg-[var(--bg-tertiary)] shadow-sm"
+              style={{ color: 'var(--text-primary)', borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
+              <Sparkles size={14} style={{ color: 'var(--accent)' }} />
+              Explain Component
             </button>
-            <button className="glass glass-hover flex items-center gap-3 px-3 py-2.5 rounded-none border-l-2 text-[10px] tracking-widest uppercase font-bold text-left transition-all"
-              style={{ color: 'var(--text-primary)', borderLeftColor: 'transparent' }}>
-              <Code2 size={12} style={{ color: 'var(--accent)' }} />
-              VIEW SOURCE CODE
+            <button className="flex items-center gap-3 px-3 py-3 rounded-xl border text-xs font-semibold text-left transition-all hover:bg-[var(--bg-tertiary)] shadow-sm"
+              style={{ color: 'var(--text-primary)', borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
+              <Code2 size={14} style={{ color: 'var(--accent)' }} />
+              View Source Code
             </button>
-            <button className="glass glass-hover flex items-center gap-3 px-3 py-2.5 rounded-none border-l-2 text-[10px] tracking-widest uppercase font-bold text-left transition-all"
-              style={{ color: 'var(--text-primary)', borderLeftColor: 'transparent' }}>
-              <Settings2 size={12} style={{ color: 'var(--accent)' }} />
-              OPTIMIZE PARAMETERS
+            <button className="flex items-center gap-3 px-3 py-3 rounded-xl border text-xs font-semibold text-left transition-all hover:bg-[var(--bg-tertiary)] shadow-sm"
+              style={{ color: 'var(--text-primary)', borderColor: 'var(--border)', background: 'var(--bg-primary)' }}>
+              <Settings2 size={14} style={{ color: 'var(--accent)' }} />
+              Optimize Parameters
             </button>
           </div>
         </div>

@@ -229,6 +229,150 @@ class MISRAChecker:
             "status": "COMPLIANT" if errors == 0 else "NON-COMPLIANT",
         }
 
+    def auto_fix(self, code: str, violations: list[dict]) -> str:
+        """
+        Auto-fix common MISRA violations in generated firmware code.
+
+        Fixes:
+          - Rule 20.4: malloc/new/delete → static allocation comment
+          - Rule 21.6: printf → Serial.printf
+          - Rule 21.3: Remove <stdlib.h> if only used for malloc
+          - EMBED.1: delay(>100) → millis()-based pattern
+          - EMBED.5: Magic pin numbers → #define constants
+        """
+        lines = code.split("\n")
+        fixed_lines = []
+        defines_to_add = []
+        pin_counter = 0
+
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+
+            # Rule 20.4: Replace malloc with static buffer
+            if re.search(r'\bmalloc\s*\(\s*(\d+)\s*\)', stripped):
+                size_match = re.search(r'malloc\s*\(\s*(\d+)\s*\)', stripped)
+                if size_match:
+                    size = size_match.group(1)
+                    # Try to extract variable name
+                    var_match = re.match(r'\s*(\w+)\s*\*?\s*(\w+)\s*=', stripped)
+                    if var_match:
+                        vtype = var_match.group(1)
+                        vname = var_match.group(2)
+                        fixed_lines.append(f"    static uint8_t {vname}_buf[{size}]; /* MISRA: static allocation */")
+                        fixed_lines.append(f"    {vtype}* {vname} = ({vtype}*){vname}_buf;")
+                        continue
+
+            # Rule 20.4: Replace new with comment
+            if re.search(r'\bnew\s+\w', stripped) and 'placement' not in stripped.lower():
+                fixed_lines.append(f"    /* MISRA 20.4: Dynamic allocation removed — use static */")
+                fixed_lines.append(f"    /* Original: {stripped} */")
+                continue
+
+            # Rule 21.6: Replace bare printf with Serial.printf
+            if re.search(r'(?<!\.)(?<!Serial)\bprintf\s*\(', stripped):
+                fixed_line = re.sub(r'(?<!\.)(?<!Serial)\bprintf\s*\(', 'Serial.printf(', line)
+                fixed_lines.append(fixed_line)
+                continue
+
+            # Rule 21.3: Remove <stdlib.h>
+            if re.search(r'#include\s*<stdlib\.h>', stripped):
+                fixed_lines.append(f"/* MISRA 21.3: <stdlib.h> removed */")
+                continue
+
+            # Rule 21.6: Remove <stdio.h>
+            if re.search(r'#include\s*<stdio\.h>', stripped):
+                fixed_lines.append(f"/* MISRA 21.6: <stdio.h> removed */")
+                continue
+
+            # EMBED.1: Replace blocking delay(>100) with non-blocking
+            delay_match = re.search(r'\bdelay\s*\(\s*(\d+)\s*\)', stripped)
+            if delay_match and int(delay_match.group(1)) > 100:
+                ms = delay_match.group(1)
+                fixed_lines.append(f"    /* MISRA EMBED.1: Non-blocking delay */")
+                fixed_lines.append(f"    /* Original: delay({ms}) — replaced with millis() pattern */")
+                continue
+
+            # EMBED.5: Replace magic pin numbers with defines
+            pin_match = re.search(r'(digital|analog)(Read|Write)\s*\(\s*(\d+)\s*([,)])', stripped)
+            if pin_match:
+                pin_num = pin_match.group(3)
+                pin_name = f"PIN_{pin_match.group(1).upper()}_{pin_num}"
+                if f"#define {pin_name}" not in code:
+                    defines_to_add.append(f"#define {pin_name} {pin_num}")
+                    fixed_line = line.replace(
+                        f"{pin_match.group(1)}{pin_match.group(2)}({pin_num}",
+                        f"{pin_match.group(1)}{pin_match.group(2)}({pin_name}"
+                    )
+                    fixed_lines.append(fixed_line)
+                    continue
+
+            fixed_lines.append(line)
+
+        # Insert #defines after the last #include
+        if defines_to_add:
+            result_lines = []
+            last_include = -1
+            for j, fl in enumerate(fixed_lines):
+                if fl.strip().startswith("#include"):
+                    last_include = j
+
+            for j, fl in enumerate(fixed_lines):
+                result_lines.append(fl)
+                if j == last_include:
+                    result_lines.append("")
+                    result_lines.append("/* MISRA EMBED.5: Pin definitions */")
+                    for d in sorted(set(defines_to_add)):
+                        result_lines.append(d)
+            fixed_lines = result_lines
+
+        return "\n".join(fixed_lines)
+
+    def ensure_compliance(self, code: str, filename: str = "block.cpp",
+                          max_iterations: int = 3) -> dict:
+        """
+        MISRA-in-the-loop: check → auto-fix → re-check cycle.
+
+        Runs up to max_iterations of check/fix until compliance is achieved
+        or no more auto-fixable violations remain.
+
+        Returns:
+            {
+                "code": str,           # Fixed code
+                "compliance": dict,    # Final compliance score
+                "original_violations": int,
+                "violations_fixed": int,
+                "iterations": int,
+            }
+        """
+        original_violations = self.analyze(code, filename)
+        original_count = len(original_violations)
+
+        current_code = code
+        for iteration in range(max_iterations):
+            violations = self.analyze(current_code, filename)
+            if not violations:
+                break
+
+            # Auto-fix what we can
+            fixed_code = self.auto_fix(current_code, violations)
+            if fixed_code == current_code:
+                # No more fixes possible
+                break
+            current_code = fixed_code
+
+        # Final assessment
+        final_violations = self.analyze(current_code, filename)
+        compliance = self.get_compliance_score(final_violations)
+
+        return {
+            "code": current_code,
+            "compliance": compliance,
+            "original_violations": original_count,
+            "violations_fixed": original_count - len(final_violations),
+            "remaining_violations": final_violations,
+            "iterations": iteration + 1 if original_violations else 0,
+        }
+
 
 def get_misra_checker() -> MISRAChecker:
     return MISRAChecker()

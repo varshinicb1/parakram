@@ -4,17 +4,9 @@
  */
 import { create } from 'zustand';
 
-export type Space = 'home' | 'workspace' | 'blocks' | 'devices' | 'telemetry' | 'settings' | 'debug' | 'simulator' | 'verification' | 'admin' | 'auth' | 'installer' | 'extensions';
+export type Space = 'home' | 'workspace' | 'blocks' | 'devices' | 'telemetry' | 'settings' | 'debug' | 'simulator' | 'verification' | 'admin' | 'auth' | 'installer' | 'extensions' | 'calibration' | 'designer' | 'blockly';
 export type Theme = 'dark-lab' | 'cyberpunk' | 'midnight' | 'solarized' | 'retro' | 'glass';
 
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  board: string;
-  createdAt: string;
-  blocks: string[];
-}
 
 export interface Device {
   port: string;
@@ -37,12 +29,6 @@ interface AppState {
   setActiveSpace: (space: Space) => void;
   sidebarExpanded: boolean;
   toggleSidebar: () => void;
-
-  // Projects
-  activeProject: Project | null;
-  recentProjects: Project[];
-  setActiveProject: (project: Project) => void;
-  addRecentProject: (project: Project) => void;
 
   // Theme
   theme: Theme;
@@ -73,15 +59,6 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveSpace: (space) => set({ activeSpace: space }),
   sidebarExpanded: false,
   toggleSidebar: () => set((s) => ({ sidebarExpanded: !s.sidebarExpanded })),
-
-  // Projects
-  activeProject: null,
-  recentProjects: [],
-  setActiveProject: (project) => set({ activeProject: project, activeSpace: 'workspace' }),
-  addRecentProject: (project) =>
-    set((s) => ({
-      recentProjects: [project, ...s.recentProjects.filter((p) => p.id !== project.id)].slice(0, 10),
-    })),
 
   // Theme
   theme: 'dark-lab',

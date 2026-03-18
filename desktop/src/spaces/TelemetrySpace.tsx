@@ -3,7 +3,6 @@
  * Shows temperature, humidity, pressure in real-time with Recharts.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area,
 } from 'recharts';
@@ -74,62 +73,64 @@ export default function TelemetrySpace() {
   const latest = data[data.length - 1];
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b"
-        style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+      <div className="flex items-center justify-between px-8 py-6 border-b bg-[var(--bg-secondary)]"
+        style={{ borderColor: 'var(--border)' }}>
         <div>
-          <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-            <Activity size={20} style={{ color: 'var(--accent)' }} /> 
+          <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+            <Activity size={24} style={{ color: 'var(--text-primary)' }} /> 
             Telemetry Stream
           </h1>
-          <p className="text-[10px] mt-1 tracking-widest uppercase" style={{ color: 'var(--text-secondary)' }}>
-            {isLive ? 'SYS.ONLINE' : 'SYS.PAUSED'} • {data.length} SEQ
+          <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+            {isLive ? 'System Online' : 'System Paused'} • {data.length} sequences recorded
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <motion.button onClick={() => setIsLive(!isLive)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium glass glass-hover"
-            style={{ color: isLive ? 'var(--success)' : 'var(--text-secondary)' }}
-            whileHover={{ scale: 1.05 }}>
-            <HiArrowPath size={12} className={isLive ? 'animate-spin' : ''} />
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsLive(!isLive)}
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors border shadow-sm"
+            style={{ 
+              borderColor: 'var(--border)',
+              background: 'var(--bg-primary)',
+              color: isLive ? 'var(--success)' : 'var(--text-secondary)' 
+            }}>
+            <HiArrowPath size={16} className={isLive ? 'animate-spin' : ''} />
             {isLive ? 'Live' : 'Paused'}
-          </motion.button>
-          <motion.button onClick={exportCSV}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium glass glass-hover"
-            style={{ color: 'var(--text-primary)' }}
-            whileHover={{ scale: 1.05 }}>
-            <HiArrowDownTray size={12} /> Export CSV
-          </motion.button>
+          </button>
+          <button onClick={exportCSV}
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors border shadow-sm hover:bg-[var(--bg-tertiary)]"
+            style={{ borderColor: 'var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+            <HiArrowDownTray size={16} /> Export CSV
+          </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4 px-6 py-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 px-8 py-6">
         {CHART_CONFIGS.map((cfg) => (
-          <div key={cfg.key} className="glass rounded-xl px-4 py-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold tracking-widest uppercase flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                <cfg.icon size={14} style={{ color: cfg.color }} /> {cfg.label}
+          <div key={cfg.key} className="bg-[var(--bg-primary)] border rounded-xl p-6 shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                <cfg.icon size={18} style={{ color: cfg.color }} /> {cfg.label}
               </span>
-              <div className="w-1.5 h-1.5 bg-current animate-pulse shadow-[0_0_10px_currentColor]" style={{ color: cfg.color }} />
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: cfg.color }} />
             </div>
-            <div className="text-2xl font-bold mt-1" style={{ color: cfg.color }}>
+            <div className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {latest ? (latest[cfg.key as keyof DataPoint] as number).toFixed(1) : '—'}
-              <span className="text-xs font-normal ml-1" style={{ color: 'var(--text-muted)' }}>{cfg.unit}</span>
+              <span className="text-sm font-normal ml-1" style={{ color: 'var(--text-muted)' }}>{cfg.unit}</span>
             </div>
           </div>
         ))}
       </div>
 
       {/* Charts */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6 grid gap-4">
+      <div className="flex-1 overflow-y-auto px-8 pb-8 grid gap-6">
         {CHART_CONFIGS.map((cfg) => (
-          <div key={cfg.key} className="glass rounded-xl p-4" style={{ minHeight: 160 }}>
-            <h3 className="text-xs font-semibold mb-2" style={{ color: 'var(--text-secondary)' }}>
-              {cfg.label} ({cfg.unit})
+          <div key={cfg.key} className="bg-[var(--bg-primary)] border rounded-xl p-6 shadow-sm" style={{ borderColor: 'var(--border)', minHeight: 200 }}>
+            <h3 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+              {cfg.label} Trend ({cfg.unit})
             </h3>
-            <ResponsiveContainer width="100%" height={120}>
+            <ResponsiveContainer width="100%" height={160}>
               <AreaChart data={data}>
                 <defs>
                   <linearGradient id={`grad_${cfg.key}`} x1="0" y1="0" x2="0" y2="1">

@@ -67,67 +67,67 @@ export default function IdeaPalette() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="flex flex-col gap-4 p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Lightbulb size={16} style={{ color: '#d97706' }} />
-          <h2 className="text-[11px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
-            IDEA PALETTE
-          </h2>
+        <div className="flex items-center gap-2.5">
+          <Lightbulb size={20} style={{ color: '#d97706' }} />
+          <div>
+            <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+              Project Ideas
+            </h2>
+            <p className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
+              AI-powered suggestions to enhance your firmware
+            </p>
+          </div>
         </div>
-        <button className="flex items-center gap-1 px-2 py-1 rounded-none border text-[8px] tracking-widest uppercase font-bold"
+        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold transition-colors hover:bg-[var(--bg-secondary)]"
           style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-          <RefreshCw size={9} /> GENERATE MORE
+          <RefreshCw size={14} /> Refresh
         </button>
       </div>
 
-      <p className="text-[8px] tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
-        AI-POWERED SUGGESTIONS TO ENHANCE YOUR FIRMWARE PROJECT
-      </p>
-
       {/* Ideas grid */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {ideas.map((idea) => (
-          <motion.button key={idea.id}
+          <div key={idea.id}
             onClick={() => setSelectedId(selectedId === idea.id ? null : idea.id)}
-            whileHover={{ scale: 1.01 }}
-            className="text-left border rounded-none p-3 transition-all"
+            className="text-left border rounded-xl p-4 transition-all cursor-pointer hover:shadow-sm"
             style={{
-              borderColor: selectedId === idea.id ? 'var(--accent)' : 'var(--border)',
-              background: selectedId === idea.id ? 'var(--accent-subtle)' : 'var(--bg-secondary)',
+              borderColor: selectedId === idea.id ? 'var(--text-primary)' : 'var(--border)',
+              background: selectedId === idea.id ? 'var(--bg-secondary)' : 'var(--bg-primary)',
             }}>
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-1.5">
-                <Sparkles size={10} style={{ color: DIFFICULTY_COLORS[idea.difficulty] }} />
-                <span className="text-[9px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Sparkles size={14} style={{ color: DIFFICULTY_COLORS[idea.difficulty] }} />
+                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
                   {idea.title}
                 </span>
               </div>
-              <span className="px-1 py-0.5 text-[6px] tracking-widest uppercase font-bold rounded-none border shrink-0"
-                style={{ color: DIFFICULTY_COLORS[idea.difficulty], borderColor: `${DIFFICULTY_COLORS[idea.difficulty]}40` }}>
+              <span className="px-2 py-0.5 text-xs font-bold rounded-md border shrink-0 capitalize"
+                style={{ color: DIFFICULTY_COLORS[idea.difficulty], borderColor: `${DIFFICULTY_COLORS[idea.difficulty]}40`, background: `${DIFFICULTY_COLORS[idea.difficulty]}10` }}>
                 {idea.difficulty}
               </span>
             </div>
-            <p className="mt-1.5 text-[8px] tracking-wider uppercase leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            <p className="mt-2 text-xs font-medium leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               {idea.description}
             </p>
-            <div className="flex items-center gap-1 mt-2 flex-wrap">
+            <div className="flex items-center gap-1.5 mt-3 flex-wrap">
               {idea.components.map(c => (
-                <span key={c} className="px-1.5 py-0.5 text-[6px] tracking-widest uppercase font-bold border rounded-none"
+                <span key={c} className="px-2 py-0.5 text-xs font-semibold border rounded-md"
                   style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
                   {c}
                 </span>
               ))}
             </div>
             {selectedId === idea.id && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="mt-2 flex items-center gap-1 text-[8px] tracking-widest uppercase font-bold"
-                style={{ color: 'var(--accent)' }}>
-                <ArrowRight size={9} /> ADD TO PROJECT
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+                className="mt-3 pt-3 border-t flex items-center gap-1.5 text-xs font-bold transition-colors hover:opacity-80"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+                <span>Add to Project</span> <ArrowRight size={14} />
               </motion.div>
             )}
-          </motion.button>
+          </div>
         ))}
       </div>
     </div>

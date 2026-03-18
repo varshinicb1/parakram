@@ -9,11 +9,7 @@ pin assignments, and configuration.
 import os
 import json
 import re
-import aiohttp
 from typing import Optional
-
-OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-MODEL = os.environ.get("OLLAMA_CODE_MODEL", "parakram-coder-v2")
 
 # ── Component Knowledge Base ─────────────────────────
 # Maps common concepts to Parakram block IDs
@@ -287,7 +283,7 @@ class NLGraphAgent:
         if len(blocks) >= 3:
             return self.build_graph(prompt)
 
-        # Use LLM for complex reasoning
+        # Use LLM Router for complex reasoning
         llm_prompt = f"""Given this user request for an embedded system:
 "{prompt}"
 
@@ -299,14 +295,9 @@ List the hardware components needed. For each, give:
 Format: one component per line as "name|category|connection"
 """
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{OLLAMA_BASE}/api/generate",
-                    json={"model": MODEL, "prompt": llm_prompt, "stream": False},
-                    timeout=aiohttp.ClientTimeout(total=30),
-                ) as resp:
-                    data = await resp.json()
-                    text = data.get("response", "")
+            from agents.llm_provider import get_router
+            router = get_router()
+            text = await router.generate(llm_prompt, max_tokens=500, temperature=0.2)
 
             # Parse LLM response and map to blocks
             for line in text.strip().split("\n"):

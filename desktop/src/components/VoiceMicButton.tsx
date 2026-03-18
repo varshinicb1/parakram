@@ -82,29 +82,28 @@ export default function VoiceMicButton({ onTranscript }: Props) {
     <motion.button
       onClick={toggleRecording}
       disabled={isProcessing}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      className="relative p-2 rounded-none border transition-all disabled:opacity-50"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="relative p-2.5 rounded-full border transition-all disabled:opacity-50"
       style={{
-        background: isRecording ? '#ef4444' : 'var(--bg-tertiary)',
+        background: isRecording ? '#ef4444' : 'var(--bg-secondary)',
         borderColor: isRecording ? '#ef4444' : 'var(--border)',
         color: isRecording ? 'white' : 'var(--text-secondary)',
-        boxShadow: isRecording ? '0 0 20px rgba(239,68,68,0.5)' : 'none',
       }}
     >
       {isProcessing ? (
-        <Loader2 size={14} className="animate-spin" />
+        <Loader2 size={16} className="animate-spin" />
       ) : isRecording ? (
-        <MicOff size={14} />
+        <MicOff size={16} />
       ) : (
-        <Mic size={14} />
+        <Mic size={16} />
       )}
       {isRecording && (
         <motion.div
-          className="absolute inset-0 rounded-none border-2"
+          className="absolute inset-0 rounded-full border-2"
           style={{ borderColor: '#ef4444' }}
-          animate={{ scale: [1, 1.3, 1], opacity: [1, 0, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+          animate={{ scale: [1, 1.4, 1], opacity: [0.8, 0, 0.8] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
         />
       )}
     </motion.button>

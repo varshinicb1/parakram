@@ -3,7 +3,6 @@
  * Industry-leading debug terminal that beats Embedder's CLI serial monitor.
  */
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Terminal, Play, Square, Trash2, Download, Zap,
   Radio, Cpu, AlertTriangle, Filter, Send
@@ -150,110 +149,116 @@ export default function DebugSpace() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex items-center justify-between px-6 py-4 border-b bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-3">
-          <Terminal size={16} style={{ color: 'var(--accent)' }} />
-          <h1 className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
-            DEBUG TERMINAL
+          <Terminal size={20} style={{ color: 'var(--text-secondary)' }} />
+          <h1 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Debug Terminal
           </h1>
-          <span className={`w-2 h-2 rounded-full ${connected ? 'animate-pulse' : ''}`}
-            style={{ background: connected ? '#22c55e' : '#ef4444' }} />
-          <span className="text-[7px] tracking-widest uppercase" style={{ color: connected ? '#22c55e' : '#ef4444' }}>
-            {connected ? 'CONNECTED' : 'DISCONNECTED'}
-          </span>
+          <div className="flex items-center gap-2 ml-4 px-2.5 py-1 rounded-md border bg-[var(--bg-primary)]" style={{ borderColor: 'var(--border)' }}>
+            <span className="w-2 h-2 rounded-full"
+              style={{ background: connected ? 'var(--success)' : 'var(--error)' }} />
+            <span className="text-xs font-medium" style={{ color: connected ? 'var(--success)' : 'var(--error)' }}>
+              {connected ? 'Connected' : 'Disconnected'}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Baud rate selector */}
           <select value={baudRate} onChange={e => setBaudRate(Number(e.target.value))}
-            className="bg-transparent border rounded-none px-2 py-1 text-[8px] tracking-widest uppercase font-mono outline-none"
+            className="bg-[var(--bg-primary)] border rounded-md px-3 py-1.5 text-xs font-mono outline-none"
             style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
             {BAUD_RATES.map(b => <option key={b} value={b}>{b} baud</option>)}
           </select>
 
-          <motion.button onClick={toggleConnection}
-            whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1 px-2 py-1 text-[7px] tracking-widest uppercase font-bold border rounded-none"
-            style={{ borderColor: connected ? '#ef4444' : '#22c55e', color: connected ? '#ef4444' : '#22c55e' }}>
-            {connected ? <><Square size={9} /> STOP</> : <><Play size={9} /> CONNECT</>}
-          </motion.button>
+          <button onClick={toggleConnection}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors"
+            style={{ 
+              background: connected ? 'var(--error)' : 'var(--text-primary)', 
+              color: connected ? 'white' : 'var(--bg-primary)' 
+            }}>
+            {connected ? <><Square size={14} /> Stop</> : <><Play size={14} /> Connect</>}
+          </button>
 
-          <button onClick={() => setLines([])} className="p-1" style={{ color: 'var(--text-muted)' }}>
-            <Trash2 size={13} />
+          <div className="h-6 w-px bg-[var(--border)] mx-1" />
+
+          <button onClick={() => setLines([])} className="p-1.5 rounded transition-colors hover:bg-[var(--bg-tertiary)]" style={{ color: 'var(--text-muted)' }} title="Clear">
+            <Trash2 size={16} />
           </button>
-          <button onClick={exportLog} className="p-1" style={{ color: 'var(--text-muted)' }}>
-            <Download size={13} />
+          <button onClick={exportLog} className="p-1.5 rounded transition-colors hover:bg-[var(--bg-tertiary)]" style={{ color: 'var(--text-muted)' }} title="Export">
+            <Download size={16} />
           </button>
-          <button onClick={analyzeProtocol} className="flex items-center gap-1 px-2 py-1 text-[7px] tracking-widest uppercase font-bold border rounded-none"
-            style={{ borderColor: '#8b5cf6', color: '#8b5cf6' }}>
-            <Radio size={9} /> ANALYZE
+          <button onClick={analyzeProtocol} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold border rounded-md transition-colors hover:bg-[var(--bg-tertiary)]"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+            <Radio size={14} /> Analyze
           </button>
-          <button onClick={scanI2C} className="flex items-center gap-1 px-2 py-1 text-[7px] tracking-widest uppercase font-bold border rounded-none"
-            style={{ borderColor: '#3b82f6', color: '#3b82f6' }}>
-            <Cpu size={9} /> I2C SCAN
+          <button onClick={scanI2C} className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold border rounded-md transition-colors hover:bg-[var(--bg-tertiary)]"
+            style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+            <Cpu size={14} /> I2C Scan
           </button>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div className="flex items-center border-b" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex items-center border-b px-2 pt-2 bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
         {([['serial', 'Serial Monitor', Terminal], ['protocol', 'Protocol Analyzer', Radio], ['crash', 'Crash Decoder', AlertTriangle]] as const).map(([id, label, Icon]) => (
           <button key={id} onClick={() => setTab(id)}
-            className="flex items-center gap-1.5 px-4 py-2 text-[8px] tracking-widest uppercase font-bold border-b-2 transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors hover:bg-[var(--bg-tertiary)] rounded-t-lg"
             style={{
-              borderBottomColor: tab === id ? 'var(--accent)' : 'transparent',
-              color: tab === id ? 'var(--accent)' : 'var(--text-muted)',
+              borderBottomColor: tab === id ? 'var(--text-primary)' : 'transparent',
+              color: tab === id ? 'var(--text-primary)' : 'var(--text-muted)',
+              background: tab === id ? 'var(--bg-primary)' : 'transparent',
             }}>
-            <Icon size={11} /> {label}
+            <Icon size={14} /> {label}
           </button>
         ))}
 
         {/* Stats badge */}
         {stats && (
-          <div className="ml-auto px-3 flex items-center gap-3 text-[7px] tracking-widest" style={{ color: 'var(--text-muted)' }}>
+          <div className="ml-auto px-4 flex items-center gap-4 text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
             {Object.entries(stats.by_protocol).map(([proto, count]) => (
-              <span key={proto}>{proto}: <span style={{ color: 'var(--accent)' }}>{count}</span></span>
+              <span key={proto}>{proto}: <span style={{ color: 'var(--text-primary)' }}>{count}</span></span>
             ))}
           </div>
         )}
       </div>
 
       {/* Filter bar */}
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b" style={{ borderColor: 'var(--border)' }}>
-        <Filter size={11} style={{ color: 'var(--text-muted)' }} />
+      <div className="flex items-center gap-3 px-4 py-2.5 border-b bg-[var(--bg-primary)]" style={{ borderColor: 'var(--border)' }}>
+        <Filter size={14} style={{ color: 'var(--text-muted)' }} />
         <input value={filter} onChange={e => setFilter(e.target.value)}
-          placeholder="FILTER: error, warning, data, init, memory, or text..."
-          className="flex-1 bg-transparent text-[8px] tracking-widest font-mono outline-none"
+          placeholder="Filter: error, warning, data, init, memory, or text..."
+          className="flex-1 bg-transparent text-xs font-mono outline-none"
           style={{ color: 'var(--text-primary)' }} />
-        <span className="text-[7px] font-mono" style={{ color: 'var(--text-muted)' }}>
-          {filteredLines.length}/{lines.length} lines
+        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+          {filteredLines.length} / {lines.length} lines
         </span>
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden bg-[var(--bg-primary)]">
         {/* Main terminal */}
         <div className="flex-1 flex flex-col min-w-0">
           {tab === 'serial' && (
             <>
-              <div ref={terminalRef} className="flex-1 overflow-y-auto p-2 font-mono text-[10px] leading-relaxed"
-                style={{ background: '#0a0a0a' }}>
+              <div ref={terminalRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed">
                 {filteredLines.map(line => (
-                  <div key={line.id} className="flex gap-2 hover:brightness-125 transition-all py-px">
-                    <span className="text-[8px] shrink-0" style={{ color: '#555' }}>{line.timestamp}</span>
+                  <div key={line.id} className="flex gap-4 hover:bg-[var(--bg-tertiary)] transition-colors py-1 px-2 rounded">
+                    <span className="shrink-0" style={{ color: 'var(--text-muted)' }}>{line.timestamp}</span>
                     <span style={{ color: getTypeColor(line.type) }}>{line.raw}</span>
                   </div>
                 ))}
                 {lines.length === 0 && (
-                  <div className="text-center py-12 text-[9px] tracking-widest uppercase" style={{ color: '#333' }}>
-                    CLICK CONNECT TO START SERIAL MONITOR
+                  <div className="text-center py-16 text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+                    Click Connect to start serial monitor
                   </div>
                 )}
               </div>
 
               {/* Send input */}
-              <div className="flex items-center gap-2 px-3 py-1.5 border-t" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-                <Send size={11} style={{ color: 'var(--text-muted)' }} />
+              <div className="flex items-center gap-3 px-4 py-3 border-t bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+                <Send size={14} style={{ color: 'var(--text-muted)' }} />
                 <input value={sendInput} onChange={e => setSendInput(e.target.value)}
                   onKeyDown={e => {
                     if (e.key === 'Enter' && sendInput.trim()) {
@@ -265,50 +270,51 @@ export default function DebugSpace() {
                       setSendInput('');
                     }
                   }}
-                  placeholder="Send command..." className="flex-1 bg-transparent text-[9px] font-mono outline-none"
-                  style={{ color: 'var(--text-primary)' }} />
+                  placeholder="Send command..." className="flex-1 bg-[var(--bg-primary)] border rounded-md px-3 py-1.5 text-xs font-mono outline-none focus:border-[var(--text-primary)] transition-colors"
+                  style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }} />
               </div>
             </>
           )}
 
           {tab === 'protocol' && (
-            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+            <div className="flex-1 overflow-y-auto p-6 space-y-2 bg-[var(--bg-tertiary)]">
               {protocolFrames.length === 0 ? (
-                <div className="text-center py-12 text-[9px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>
-                  CLICK ANALYZE TO DECODE PROTOCOLS FROM SERIAL DATA
+                <div className="text-center py-16 text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+                  Click Analyze to decode protocols from serial data
                 </div>
               ) : protocolFrames.map((frame, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-1.5 border rounded-none text-[9px] font-mono"
-                  style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-                  <span className="text-[7px] tracking-widest uppercase font-bold px-1.5 py-0.5 rounded-none"
+                <div key={i} className="flex items-center gap-4 px-4 py-2 border rounded-md text-xs font-mono shadow-sm bg-[var(--bg-primary)]"
+                  style={{ borderColor: 'var(--border)' }}>
+                  <span className="text-xs font-bold px-2 py-1 rounded-md"
                     style={{
-                      background: frame.protocol === 'I2C' ? '#3b82f620' : frame.protocol === 'SPI' ? '#8b5cf620' : frame.protocol === 'CAN' ? '#f59e0b20' : '#22c55e20',
+                      background: 'var(--bg-tertiary)',
                       color: frame.protocol === 'I2C' ? '#3b82f6' : frame.protocol === 'SPI' ? '#8b5cf6' : frame.protocol === 'CAN' ? '#f59e0b' : '#22c55e',
                     }}>{frame.protocol}</span>
-                  {frame.direction && <span style={{ color: '#888' }}>{frame.direction}</span>}
-                  {frame.address && <span style={{ color: 'var(--accent)' }}>{frame.address}</span>}
+                  {frame.direction && <span style={{ color: 'var(--text-muted)' }}>{frame.direction}</span>}
+                  {frame.address && <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{frame.address}</span>}
                   <span className="flex-1 truncate" style={{ color: 'var(--text-secondary)' }}>{frame.raw}</span>
-                  {frame.decoded && <span className="text-[7px]" style={{ color: '#22c55e' }}>{frame.decoded}</span>}
+                  {frame.decoded && <span className="text-xs font-medium" style={{ color: 'var(--success)' }}>{frame.decoded}</span>}
                 </div>
               ))}
             </div>
           )}
 
           {tab === 'crash' && (
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="text-center py-8 space-y-3">
-                <AlertTriangle size={30} style={{ color: '#f59e0b', margin: '0 auto' }} />
-                <h3 className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>CRASH DECODER</h3>
-                <p className="text-[8px] tracking-wider max-w-sm mx-auto" style={{ color: 'var(--text-muted)' }}>
-                  Paste a crash dump (ESP32 Guru Meditation, STM32 HardFault, RP2040 panic) to decode
-                  the stack trace, register state, and identify the fault location.
-                </p>
+            <div className="flex-1 overflow-y-auto p-8 bg-[var(--bg-tertiary)]">
+              <div className="text-center py-12 space-y-6 bg-[var(--bg-primary)] border rounded-xl shadow-sm max-w-2xl mx-auto" style={{ borderColor: 'var(--border)' }}>
+                <AlertTriangle size={48} style={{ color: 'var(--warning)', margin: '0 auto' }} />
+                <div>
+                  <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Crash Decoder</h3>
+                  <p className="text-sm mt-2 max-w-sm mx-auto" style={{ color: 'var(--text-muted)' }}>
+                    Paste a crash dump (ESP32 Guru Meditation, STM32 HardFault) to decode the stack trace.
+                  </p>
+                </div>
                 <textarea placeholder="Paste crash dump here..."
-                  className="w-full max-w-lg mx-auto h-32 bg-transparent border rounded-none p-3 font-mono text-[9px] outline-none resize-none"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)', background: '#0a0a0a' }} />
-                <button className="flex items-center gap-1 px-3 py-1.5 mx-auto text-[8px] tracking-widest uppercase font-bold border rounded-none"
-                  style={{ borderColor: '#f59e0b', color: '#f59e0b' }}>
-                  <Zap size={10} /> DECODE CRASH
+                  className="w-full max-w-lg mx-auto h-40 bg-[var(--bg-secondary)] border rounded-md p-4 font-mono text-xs outline-none resize-none focus:border-[var(--text-primary)] transition-colors block"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
+                <button className="flex items-center justify-center gap-2 px-6 py-2.5 mx-auto text-sm font-semibold rounded-md transition-colors"
+                  style={{ background: 'var(--warning)', color: '#000' }}>
+                  <Zap size={16} /> Decode Stack Trace
                 </button>
               </div>
             </div>
@@ -317,19 +323,19 @@ export default function DebugSpace() {
 
         {/* Right: I2C Device Panel */}
         {i2cDevices.length > 0 && (
-          <div className="w-56 border-l overflow-y-auto shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-            <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
-              <span className="text-[8px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-muted)' }}>
-                I2C DEVICES ({i2cDevices.length})
+          <div className="w-64 border-l overflow-y-auto shrink-0 bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+            <div className="px-4 py-3 border-b bg-[var(--bg-tertiary)]" style={{ borderColor: 'var(--border)' }}>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>
+                I2C Devices ({i2cDevices.length})
               </span>
             </div>
             {i2cDevices.map((dev, i) => (
-              <div key={i} className="px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
+              <div key={i} className="px-4 py-3 border-b border-transparent hover:bg-[var(--bg-tertiary)] transition-colors" style={{ borderColor: 'var(--border)' }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono font-bold" style={{ color: 'var(--accent)' }}>{dev.address}</span>
-                  <Cpu size={10} style={{ color: '#3b82f6' }} />
+                  <span className="text-sm font-mono font-bold" style={{ color: 'var(--text-primary)' }}>{dev.address}</span>
+                  <Cpu size={14} style={{ color: 'var(--text-muted)' }} />
                 </div>
-                <p className="text-[8px] tracking-wider mt-0.5" style={{ color: 'var(--text-secondary)' }}>{dev.device}</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{dev.device}</p>
               </div>
             ))}
           </div>

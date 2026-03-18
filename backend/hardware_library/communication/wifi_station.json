@@ -2,50 +2,20 @@
   "id": "wifi_station",
   "name": "WiFi Station",
   "category": "communication",
-  "description": "Connects ESP32 to a WiFi network. Provides network connectivity for HTTP, MQTT, and other protocols.",
-  "inputs": [],
-  "outputs": [
-    {
-      "name": "connected",
-      "data_type": "bool",
-      "description": "WiFi connection status"
-    },
-    {
-      "name": "ip_address",
-      "data_type": "string",
-      "description": "Assigned IP address"
-    }
+  "description": "WiFi Station firmware block",
+  "libraries": [
+    "WiFi.h"
   ],
-  "configuration": [
-    {
-      "key": "ssid",
-      "label": "WiFi SSID",
-      "value_type": "string",
-      "default": "",
-      "description": "WiFi network name"
-    },
-    {
-      "key": "password",
-      "label": "WiFi Password",
-      "value_type": "string",
-      "default": "",
-      "description": "WiFi network password"
-    },
-    {
-      "key": "auto_reconnect",
-      "label": "Auto Reconnect",
-      "value_type": "bool",
-      "default": "true",
-      "description": "Automatically reconnect on disconnect"
-    }
-  ],
-  "code_template": "wifi_template",
-  "icon": "wifi",
-  "color": "#8b5cf6",
-  "libraries": [],
-  "pins_required": {},
+  "pins": {},
+  "bus": "",
+  "i2c_address": "",
+  "platformio_deps": [],
   "firmware_template": {
-    "header": "#ifndef WIFI_STATION_H\n#define WIFI_STATION_H\n\n#include <Arduino.h>\n\nclass WiFiStation {\npublic:\n    static void wifi_station_setup(const char* ssid, const char* password, bool auto_reconnect);\n    static void wifi_station_loop();\n    static bool is_connected();\n    static String get_ip_address();\n\nprivate:\n    static WiFiClient client;\n    static bool connected;\n    static String ip_address;\n};\n\n#endif // WIFI_STATION_H",
-    "source": "#include \"wifi_station.h\"\n\nWiFiClient WiFiStation::client;\nbool WiFiStation::connected = false;\nString WiFiStation::ip_address = \"\";\n\nvoid WiFiStation::wifi_station_setup(const char* ssid, const char* password, bool auto_reconnect) {\n    Serial.println(\"[wifi_station] Setting up WiFi...\");\n\n    WiFi.begin(ssid, password);\n\n    unsigned long startAttemptTime = millis();\n    while (millis() - startAttemptTime < 10000) { // Retry for 10 seconds\n        if (WiFi.status() == WL_CONNECTED) {\n            connected = true;\n            ip_address = WiFi.localIP().toString();\n            Serial.print(\"[wifi_station] Connected to \");\n            Serial.println(ssid);\n            Serial.print(\"[wifi_station] IP address: \");\n            Serial.println(ip_address);\n            return;\n        }\n        delay(1000);\n    }\n\n    Serial.println(\"[wifi_station] Failed to connect to WiFi\");\n}\n\nvoid WiFiStation::wifi_station_loop() {\n    if (!connected && WiFi.status() == WL_CONNECTED) {\n        connected = true;\n        ip_address = WiFi.localIP().toString();\n        Serial.print(\"[wifi_station] Reconnected to \");\n        Serial.println(WiFi.SSID());\n        Serial.print(\"[wifi_station] IP address: \");\n        Serial.println(ip_address);\n    } else if (connected && WiFi.status() != WL_CONNECTED) {\n        connected = false;\n        ip_address = \"\";\n        Serial.println(\"[wifi_station] Lost connection to WiFi\");\n    }\n}\n\nbool WiFiStation::is_connected() {\n    return connected;\n}\n\nString WiFiStation::get_ip_address() {\n    return ip_address;\n}"
-  }
+    "header": "#ifndef WIFI_STATION_H\n#define WIFI_STATION_H\n#include <WiFi.h>\nvoid wifi_setup(const char* ssid, const char* pass);\nvoid wifi_loop();\nbool wifi_connected();\nString wifi_get_ip();\nint wifi_get_rssi();\n#endif",
+    "source": "#include \"wifi_station.h\"\nstatic bool _connected = false;\nvoid wifi_setup(const char* ssid, const char* pass) {\n  WiFi.mode(WIFI_STA);\n  WiFi.begin(ssid, pass);\n  Serial.printf(\"[wifi] Connecting to %s\", ssid);\n  int retries = 0;\n  while (WiFi.status() != WL_CONNECTED && retries < 40) {\n    delay(500); Serial.print(\".\"); retries++;\n  }\n  if (WiFi.status() == WL_CONNECTED) {\n    _connected = true;\n    Serial.printf(\"\\n[wifi] OK IP=%s RSSI=%d\\n\", WiFi.localIP().toString().c_str(), WiFi.RSSI());\n  } else {\n    Serial.println(\"\\n[wifi] FAILED!\");\n  }\n}\nvoid wifi_loop() {\n  _connected = (WiFi.status() == WL_CONNECTED);\n}\nbool wifi_connected() { return _connected; }\nString wifi_get_ip() { return WiFi.localIP().toString(); }\nint wifi_get_rssi() { return WiFi.RSSI(); }"
+  },
+  "configurable_params": {},
+  "outputs": {},
+  "verified": true,
+  "anti_hallucination": true
 }

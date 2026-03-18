@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "parakram",
-  "version": "0.1.0",
-  "identifier": "com.parakram.app",
+  "productName": "Parakram",
+  "version": "1.0.0",
+  "identifier": "com.vidyutlabs.parakram",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
@@ -12,15 +12,19 @@
   "app": {
     "windows": [
       {
-        "title": "Parakram",
-        "width": 800,
-        "height": 600,
+        "title": "Parakram — AI Firmware Studio",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1024,
+        "minHeight": 700,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "decorations": true,
+        "center": true
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:8000 https://wokwi.com https://*.wokwi.com; frame-src https://wokwi.com https://*.wokwi.com; img-src 'self' data: https:"
     }
   },
   "bundle": {
@@ -32,6 +36,19 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "externalBin": [
+      "sidecars/parakram-backend"
+    ],
+    "resources": [
+      "sidecars/*"
     ]
+  },
+  "plugins": {
+    "shell": {
+      "scope": {
+        "sidecar": true
+      }
+    }
   }
 }

@@ -33,13 +33,15 @@ export default function GitTimeline() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-5 p-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <GitBranch size={16} style={{ color: 'var(--accent)' }} />
-          <h2 className="text-[11px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
-            VERSION CONTROL
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 border rounded-md bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+            <GitBranch size={16} style={{ color: 'var(--text-primary)' }} />
+          </div>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+            Version Control
           </h2>
         </div>
         <div className="flex items-center gap-2">
@@ -47,17 +49,17 @@ export default function GitTimeline() {
             value={releaseVersion}
             onChange={(e) => setReleaseVersion(e.target.value)}
             placeholder="v1.0.0"
-            className="w-20 bg-transparent border rounded-none px-2 py-1 text-[9px] tracking-widest uppercase font-mono outline-none"
+            className="w-24 bg-[var(--bg-secondary)] border rounded-md px-2.5 py-1.5 text-xs font-mono outline-none focus:border-[var(--text-primary)] transition-colors shadow-sm"
             style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
           />
           <button onClick={createRelease}
-            className="flex items-center gap-1 px-2 py-1 rounded-none border text-[8px] tracking-widest uppercase font-bold"
-            style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
-            <Tag size={10} /> RELEASE
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-bold transition-all hover:bg-[var(--text-primary)] hover:text-[var(--bg-primary)]"
+            style={{ borderColor: 'var(--text-primary)', color: 'var(--text-primary)' }}>
+            <Tag size={12} /> Release
           </button>
-          <button className="flex items-center gap-1 px-2 py-1 rounded-none border text-[8px] tracking-widest uppercase font-bold"
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-bold transition-colors hover:bg-[var(--bg-secondary)]"
             style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
-            <Upload size={10} /> PUSH
+            <Upload size={12} /> Push
           </button>
         </div>
       </div>
@@ -68,25 +70,28 @@ export default function GitTimeline() {
           <motion.div key={commit.hash}
             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="flex items-start gap-3 py-3 border-l-2 pl-4 relative"
-            style={{ borderLeftColor: i === 0 ? 'var(--accent)' : 'var(--border)' }}>
+            className="flex items-start gap-4 py-4 border-l-2 pl-5 relative"
+            style={{ borderLeftColor: i === 0 ? 'var(--text-primary)' : 'var(--border)' }}>
             {/* Dot */}
-            <div className="absolute -left-[5px] top-4 w-2 h-2 rounded-none"
-              style={{ background: i === 0 ? 'var(--accent)' : 'var(--border)' }} />
+            <div className="absolute -left-[5px] top-5 w-2 h-2 rounded-full border-2"
+              style={{ background: 'var(--bg-primary)', borderColor: i === 0 ? 'var(--text-primary)' : 'var(--border)' }} />
             {/* Content */}
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <GitCommit size={12} style={{ color: 'var(--accent)' }} />
-                <span className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
+                <GitCommit size={14} style={{ color: i === 0 ? 'var(--text-primary)' : 'var(--text-muted)' }} />
+                <span className="text-sm font-semibold" style={{ color: i === 0 ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                   {commit.message}
                 </span>
               </div>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-[8px] font-mono tracking-wider uppercase" style={{ color: 'var(--accent)' }}>
+              <div className="flex items-center gap-3 mt-1.5 ml-5">
+                <span className="text-xs font-mono font-bold" style={{ color: 'var(--text-primary)' }}>
                   {commit.short_hash}
                 </span>
-                <span className="text-[8px] tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
+                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
                   {commit.date}
+                </span>
+                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  · {commit.author}
                 </span>
               </div>
             </div>

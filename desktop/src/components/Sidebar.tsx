@@ -1,32 +1,34 @@
 /**
- * Sidebar — V2 Complete with all 12 spaces.
- * Uses Lucide icons with Stark HUD aesthetic.
+ * Sidebar — Complete navigation for all 14 spaces.
+ * Clean icon sidebar with tooltips and active indicators.
  */
 import { motion } from 'framer-motion';
 import { useAppStore, type Space } from '../stores/appStore';
 import {
-  Home, Folder, Box, Cpu, Activity, Settings, Bug, Hexagon,
-  Monitor, ClipboardCheck, Shield, LogIn, Download, Puzzle
+  Home, Folder, Component, Cpu, Activity, Settings, Hexagon,
+  MonitorPlay, Bug, ShieldCheck, Gauge, Package, LogIn, Puzzle, PenTool, Blocks
 } from 'lucide-react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const spaces: { id: Space; icon: any; label: string }[] = [
+const mainSpaces: { id: Space; icon: any; label: string }[] = [
   { id: 'home', icon: Home, label: 'Home' },
   { id: 'workspace', icon: Folder, label: 'Projects' },
-  { id: 'blocks', icon: Box, label: 'Blocks' },
+  { id: 'blocks', icon: Component, label: 'Blocks (202+)' },
+  { id: 'designer', icon: PenTool, label: 'Visual Designer' },
+  { id: 'blockly', icon: Blocks, label: 'Blockly Editor' },
+  { id: 'simulator', icon: MonitorPlay, label: 'Simulator' },
   { id: 'devices', icon: Cpu, label: 'Devices' },
-  { id: 'simulator', icon: Monitor, label: 'Simulator' },
-  { id: 'verification', icon: ClipboardCheck, label: 'Verify' },
   { id: 'telemetry', icon: Activity, label: 'Telemetry' },
-  { id: 'installer', icon: Download, label: 'Installer' },
-  { id: 'extensions', icon: Puzzle, label: 'Extensions' },
-  { id: 'settings', icon: Settings, label: 'Settings' },
   { id: 'debug', icon: Bug, label: 'Debug' },
+  { id: 'calibration', icon: Gauge, label: 'Calibration' },
+  { id: 'verification', icon: ShieldCheck, label: 'Verification' },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const bottomSpaces: { id: Space; icon: any; label: string }[] = [
-  { id: 'admin', icon: Shield, label: 'Admin' },
+  { id: 'extensions', icon: Puzzle, label: 'Extensions' },
+  { id: 'installer', icon: Package, label: 'Installer' },
+  { id: 'settings', icon: Settings, label: 'Settings' },
   { id: 'auth', icon: LogIn, label: 'Account' },
 ];
 
@@ -41,28 +43,27 @@ export default function Sidebar() {
       <motion.button
         key={id}
         onClick={() => setActiveSpace(id)}
-        className="relative flex items-center justify-center w-10 h-10 rounded-[4px] transition-all duration-200 group"
-        style={{
-          background: isActive ? 'var(--accent-subtle)' : 'transparent',
-          color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-          border: isActive ? '1px solid var(--accent)' : '1px solid transparent'
-        }}
-        whileHover={{ scale: 1.1 }}
+        className={`relative flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-200 group ${
+          isActive 
+            ? 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] shadow-sm' 
+            : 'text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)]'
+        }`}
+        whileHover={{ scale: isActive ? 1 : 1.05 }}
         whileTap={{ scale: 0.95 }}
         title={label}
       >
         <Icon size={20} />
         {isActive && (
           <motion.div
-            className="absolute left-[3px] w-[2px] h-6 rounded-none"
-            style={{ background: 'var(--accent)', boxShadow: '0 0 8px var(--accent-glow)' }}
+            className="absolute -left-1 w-1 h-5 rounded-full"
+            style={{ background: 'var(--text-primary)' }}
             layoutId="sidebar-indicator"
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            transition={{ type: 'tween', duration: 0.15 }}
           />
         )}
         {/* Tooltip */}
-        <span className="absolute left-14 px-2 py-1 rounded-none border text-[10px] tracking-widest uppercase font-bold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50"
-          style={{ background: 'var(--bg-elevated)', color: 'var(--accent)', borderColor: 'var(--accent)', boxShadow: '0 0 10px var(--accent-glow)' }}>
+        <span className="absolute left-14 px-3 py-1.5 rounded-lg border text-xs font-semibold tracking-wide whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-md"
+          style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}>
           {label}
         </span>
       </motion.button>
@@ -82,24 +83,24 @@ export default function Sidebar() {
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
     >
       {/* Logo */}
-      <div className="flex items-center justify-center w-10 h-10 mb-4 cursor-pointer"
+      <div className="flex items-center justify-center w-12 h-12 mb-4 cursor-pointer"
         onClick={() => setActiveSpace('home')}
-        title="Parakram Command Center"
+        title="Parakram — AI Firmware Studio"
       >
-        <Hexagon size={28} style={{ color: 'var(--accent)' }} />
+        <Hexagon size={32} style={{ color: 'var(--accent)', filter: 'drop-shadow(0 0 8px var(--accent))' }} />
       </div>
 
       {/* Main nav */}
       <nav className="flex flex-col gap-1 flex-1">
-        {spaces.map(renderNavButton)}
+        {mainSpaces.map(renderNavButton)}
       </nav>
 
-      {/* Bottom nav (Admin + Account) */}
+      {/* Bottom nav */}
       <div className="flex flex-col gap-1 border-t pt-2" style={{ borderColor: 'var(--border)' }}>
         {bottomSpaces.map(renderNavButton)}
       </div>
 
-      {/* Theme indicator */}
+      {/* Theme dot */}
       <div className="mt-2">
         <div className="w-3 h-3 rounded-full" style={{ background: 'var(--accent)' }} title={`Theme: ${theme}`} />
       </div>

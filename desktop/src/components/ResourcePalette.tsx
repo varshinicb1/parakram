@@ -3,7 +3,6 @@
  * Searchable, categorized by component type.
  */
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { BookOpen, Search, ExternalLink, Cpu, Thermometer, Gauge, Zap, Radio } from 'lucide-react';
 
 interface Resource {
@@ -50,36 +49,43 @@ export default function ResourcePalette() {
   });
 
   return (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="flex flex-col gap-4 p-5">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <BookOpen size={16} style={{ color: 'var(--accent)' }} />
-        <h2 className="text-[11px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
-          RESOURCE PALETTE
-        </h2>
+      <div className="flex items-center gap-3">
+        <div className="p-2 border rounded-lg bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+          <BookOpen size={18} style={{ color: 'var(--text-primary)' }} />
+        </div>
+        <div>
+          <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+            Resource Palette
+          </h2>
+          <p className="text-xs font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
+            Quick access to datasheets and libraries
+          </p>
+        </div>
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+      <div className="relative mt-2">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="SEARCH DATASHEETS, LIBRARIES..."
-          className="w-full bg-transparent border rounded-none pl-7 pr-3 py-1.5 text-[9px] tracking-widest uppercase font-mono outline-none"
+          placeholder="Search datasheets, libraries..."
+          className="w-full bg-[var(--bg-secondary)] border rounded-xl pl-9 pr-3 py-2 text-xs font-medium outline-none focus:border-[var(--text-primary)] transition-colors shadow-sm"
           style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
         />
       </div>
 
       {/* Category filter */}
-      <div className="flex items-center gap-1 flex-wrap">
+      <div className="flex items-center gap-1.5 flex-wrap">
         {categories.map(cat => (
           <button key={cat} onClick={() => setSelectedCategory(cat)}
-            className="px-2 py-0.5 text-[7px] tracking-widest uppercase font-bold rounded-none border transition-all"
+            className="px-2.5 py-1 text-xs font-bold rounded-md border transition-colors shadow-sm"
             style={{
-              borderColor: selectedCategory === cat ? 'var(--accent)' : 'var(--border)',
-              color: selectedCategory === cat ? 'var(--accent)' : 'var(--text-muted)',
-              background: selectedCategory === cat ? 'var(--accent-subtle)' : 'transparent',
+              borderColor: selectedCategory === cat ? 'var(--text-primary)' : 'var(--border)',
+              color: selectedCategory === cat ? 'var(--bg-primary)' : 'var(--text-muted)',
+              background: selectedCategory === cat ? 'var(--text-primary)' : 'transparent',
             }}>
             {cat}
           </button>
@@ -87,24 +93,27 @@ export default function ResourcePalette() {
       </div>
 
       {/* Resources list */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2">
         {filtered.map((r) => {
           const Icon = CATEGORY_ICONS[r.category] || BookOpen;
           return (
-            <motion.a key={r.id}
+            <a key={r.id}
               href={r.url} target="_blank" rel="noopener noreferrer"
-              whileHover={{ x: 2 }}
-              className="flex items-center gap-3 px-3 py-2 border rounded-none transition-all hover:bg-white/5"
+              className="flex items-center gap-3 p-3 border rounded-xl transition-all hover:shadow-sm hover:border-[var(--text-muted)] bg-[var(--bg-primary)] group"
               style={{ borderColor: 'var(--border)', textDecoration: 'none', color: 'var(--text-primary)' }}>
-              <Icon size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+              <div className="p-2 border rounded-lg bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+                <Icon size={16} style={{ color: 'var(--text-secondary)' }} />
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[9px] tracking-widest uppercase font-bold truncate">{r.name}</div>
-                <div className="text-[7px] tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
-                  {r.type.toUpperCase()} · {r.description}
+                <div className="text-xs font-bold truncate">{r.name}</div>
+                <div className="text-[10px] font-medium mt-0.5 uppercase" style={{ color: 'var(--text-muted)' }}>
+                  {r.type} · {r.description}
                 </div>
               </div>
-              <ExternalLink size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-            </motion.a>
+              <div className="w-8 h-8 rounded-lg border flex items-center justify-center bg-[var(--bg-secondary)] opacity-0 group-hover:opacity-100 transition-opacity" style={{ borderColor: 'var(--border)' }}>
+                <ExternalLink size={14} style={{ color: 'var(--text-primary)' }} />
+              </div>
+            </a>
           );
         })}
       </div>

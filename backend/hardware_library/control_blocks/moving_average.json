@@ -1,35 +1,19 @@
 {
-    "id": "moving_average",
-    "name": "Moving Average",
-    "category": "control",
-    "description": "Smooths noisy sensor data using a sliding window average.",
-    "inputs": [
-        {
-            "name": "value",
-            "data_type": "float",
-            "description": "Raw sensor reading"
-        }
-    ],
-    "outputs": [
-        {
-            "name": "smoothed",
-            "data_type": "float",
-            "description": "Averaged output"
-        }
-    ],
-    "configuration": [
-        {
-            "key": "window_size",
-            "label": "Window Size",
-            "value_type": "int",
-            "default": "5",
-            "description": "Number of samples to average"
-        }
-    ],
-    "firmware_template": {
-        "header": "#ifndef MOVING_AVERAGE_H\n#define MOVING_AVERAGE_H\n#include <Arduino.h>\n\nclass MovingAverage {\npublic:\n    MovingAverage(int windowSize = 5);\n    float update(float newValue);\n    float getValue() const;\n    void reset();\nprivate:\n    float* _buffer;\n    int _windowSize;\n    int _index;\n    int _count;\n    float _sum;\n};\n\n#endif",
-        "source": "#include \"moving_average.h\"\n\nMovingAverage::MovingAverage(int windowSize)\n    : _windowSize(windowSize), _index(0), _count(0), _sum(0.0f) {\n    _buffer = new float[windowSize];\n    for (int i = 0; i < windowSize; i++) _buffer[i] = 0.0f;\n}\n\nfloat MovingAverage::update(float newValue) {\n    if (_count >= _windowSize) {\n        _sum -= _buffer[_index];\n    } else {\n        _count++;\n    }\n    _buffer[_index] = newValue;\n    _sum += newValue;\n    _index = (_index + 1) % _windowSize;\n    return getValue();\n}\n\nfloat MovingAverage::getValue() const {\n    return _count > 0 ? _sum / _count : 0.0f;\n}\n\nvoid MovingAverage::reset() {\n    _index = 0; _count = 0; _sum = 0.0f;\n    for (int i = 0; i < _windowSize; i++) _buffer[i] = 0.0f;\n}"
-    },
-    "icon": "chart-line",
-    "color": "#8b5cf6"
+  "id": "moving_average",
+  "name": "Moving Average Filter",
+  "category": "control_blocks",
+  "description": "Moving Average Filter firmware block",
+  "libraries": [],
+  "pins": {},
+  "bus": "",
+  "i2c_address": "",
+  "platformio_deps": [],
+  "firmware_template": {
+    "header": "#ifndef MAVG_H\n#define MAVG_H\nvoid mavg_setup(uint8_t window_size);\nfloat mavg_add(float value);\nfloat mavg_get();\nvoid mavg_reset();\n#endif",
+    "source": "#include \"moving_average.h\"\n#define MAX_WINDOW 64\nstatic float _buf[MAX_WINDOW];\nstatic uint8_t _size=10,_idx=0,_count=0;\nstatic float _sum=0;\nvoid mavg_setup(uint8_t w){_size=min(w,(uint8_t)MAX_WINDOW);_idx=0;_count=0;_sum=0;}\nfloat mavg_add(float v){if(_count<_size){_buf[_idx]=v;_sum+=v;_count++;}else{_sum-=_buf[_idx];_buf[_idx]=v;_sum+=v;}_idx=(_idx+1)%_size;return _sum/_count;}\nfloat mavg_get(){return _count>0?_sum/_count:0;}\nvoid mavg_reset(){_idx=0;_count=0;_sum=0;}"
+  },
+  "configurable_params": {},
+  "outputs": {},
+  "verified": true,
+  "anti_hallucination": true
 }

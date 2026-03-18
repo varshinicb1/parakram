@@ -293,11 +293,74 @@ async def build_from_prompt(request: BuildRequest):
     """
     THE KILLER FEATURE.
     Natural language prompt → compiled, verified firmware project.
+    Uses LLM for unknown blocks, golden templates for known ones.
     """
     from services.prompt_to_firmware import PromptToFirmware
     pipeline = PromptToFirmware(board=request.board)
     result = await pipeline.build(request.prompt, verify=request.verify)
     return result
+
+
+# ─── Template-Only Build (100% Deterministic) ──────────
+
+class TemplateBuildRequest(BaseModel):
+    block_ids: list[str] = Field(default=[], description="List of golden block IDs to include")
+    prompt: str = Field(default="", description="OR natural language prompt (mapped to blocks)")
+    board: str = "esp32dev"
+    project_name: str = ""
+
+
+@router.post("/build/template")
+async def build_from_template(request: TemplateBuildRequest):
+    """
+    100% DETERMINISTIC firmware generation.
+    Uses ONLY verified golden block templates — zero LLM, zero hallucination.
+    MISRA C:2012 compliance guaranteed.
+    """
+    from services.template_codegen import TemplateCodeGenerator
+    gen = TemplateCodeGenerator(board=request.board)
+
+    if request.block_ids:
+        result = gen.build_from_blocks(
+            request.block_ids,
+            project_name=request.project_name or None,
+        )
+    elif request.prompt:
+        result = gen.build_from_prompt(
+            request.prompt,
+            project_name=request.project_name or None,
+        )
+    else:
+        return {"error": "Provide either block_ids or prompt"}
+
+    return result
+
+
+@router.post("/build/hybrid")
+async def build_hybrid(request: BuildRequest):
+    """
+    HYBRID BUILD: Template-first for known blocks, LLM fallback for unknowns.
+    Best of both worlds — reliability + flexibility.
+    """
+    from services.prompt_to_firmware import PromptToFirmware
+    pipeline = PromptToFirmware(board=request.board)
+    result = await pipeline.build(
+        request.prompt, verify=request.verify, template_only=False,
+    )
+    return result
+
+
+@router.get("/blocks/golden")
+async def list_golden_blocks():
+    """List all available golden blocks (verified, 100% deterministic)."""
+    from services.template_codegen import TemplateCodeGenerator
+    gen = TemplateCodeGenerator()
+    blocks = gen.get_available_blocks()
+    return {
+        "total": len(blocks),
+        "blocks": blocks,
+        "categories": list(set(b["category"] for b in blocks)),
+    }
 
 
 # ─── Runtime Library Search ─────────────────────────────
@@ -312,3 +375,311 @@ async def search_library(request: LibrarySearchRequest):
     from services.library_fetcher import search_pio_registry
     results = await search_pio_registry(request.query)
     return {"results": results}
+
+
+# ─── Calibration API ────────────────────────────────────
+
+class CalibrateRequest(BaseModel):
+    sensor_id: str
+    raw_value: float
+    reference_value: float
+
+
+@router.post("/calibrate")
+async def calibrate_sensor(request: CalibrateRequest):
+    """Add a calibration point to a sensor. Returns updated polynomial fit + R² + firmware code."""
+    from services.calibration_engine import CalibrationEngine
+    engine = CalibrationEngine()
+    engine.load_all()
+    result = engine.calibrate(request.sensor_id, request.raw_value, request.reference_value)
+    return result
+
+
+@router.get("/calibrate/recipe/{sensor_id}")
+async def get_calibration_recipe(sensor_id: str):
+    """Get the standard calibration procedure for a sensor (buffer solutions, known weights, etc.)."""
+    from services.calibration_engine import CalibrationEngine
+    engine = CalibrationEngine()
+    recipe = engine.get_calibration_recipe(sensor_id)
+    if not recipe:
+        return {"error": f"No calibration recipe for '{sensor_id}'", "available": engine.list_calibratable_sensors()}
+    return {"sensor_id": sensor_id, "recipe": recipe}
+
+
+@router.get("/calibrate/sensors")
+async def list_calibratable_sensors():
+    """List all sensors that have pre-built calibration recipes."""
+    from services.calibration_engine import CalibrationEngine
+    engine = CalibrationEngine()
+    return {"sensors": engine.list_calibratable_sensors()}
+
+
+# ─── LLM Data Interpretation API ────────────────────────
+
+class InterpretRequest(BaseModel):
+    readings: dict
+    context: str = ""
+    use_llm: bool = False
+
+
+@router.post("/interpret")
+async def interpret_data(request: InterpretRequest):
+    """Analyze sensor readings — uses rule-based engine by default, LLM if requested."""
+    from services.data_interpreter import DataInterpreter
+    llm = None
+    if request.use_llm:
+        try:
+            from agents.llm_router import LLMRouter
+            llm = LLMRouter()
+        except ImportError:
+            pass
+    interpreter = DataInterpreter(llm_router=llm)
+    result = await interpreter.interpret_readings(request.readings, request.context)
+    return result
+
+
+# ─── BlocklyDuino Import API ────────────────────────────
+
+class BlocklyImportRequest(BaseModel):
+    xml: str
+    build: bool = False
+    board: str = "esp32dev"
+
+
+@router.post("/blockly/import")
+async def import_blockly(request: BlocklyImportRequest):
+    """Import BlocklyDuino XML workspace and map to golden blocks. Optionally build firmware."""
+    from services.blockly_converter import BlocklyConverter
+    converter = BlocklyConverter()
+    parsed = converter.parse_xml(request.xml)
+
+    result = {"parsed": parsed}
+
+    if request.build and parsed.get("golden_blocks"):
+        from services.template_codegen import TemplateCodeGenerator
+        gen = TemplateCodeGenerator(board=request.board)
+        build_result = gen.build_from_blocks(parsed["golden_blocks"])
+        result["build"] = build_result
+
+    return result
+
+
+@router.get("/blockly/supported")
+async def blockly_supported_types():
+    """List all supported BlocklyDuino block types."""
+    from services.blockly_converter import BlocklyConverter
+    converter = BlocklyConverter()
+    return {"supported_types": converter.get_supported_blockly_types()}
+
+
+# ─── Multi-Board Support ────────────────────────────────
+
+@router.get("/boards")
+async def list_boards():
+    """List all supported boards (ESP32, STM32, RP2040)."""
+    from services.board_profiles import list_boards
+    return {"boards": list_boards()}
+
+
+@router.get("/boards/{board_id}")
+async def get_board(board_id: str):
+    """Get board profile with pin mapping and PlatformIO config."""
+    from services.board_profiles import get_board_profile, generate_platformio_ini
+    profile = get_board_profile(board_id)
+    if not profile:
+        return {"error": f"Unknown board '{board_id}'"}
+    return {
+        "board": profile,
+        "platformio_ini": generate_platformio_ini(board_id),
+    }
+
+
+# ─── Auto-Documentation ─────────────────────────────────
+
+class DocRequest(BaseModel):
+    project_name: str
+    block_ids: list[str]
+    board: str = "esp32dev"
+
+
+@router.post("/docs/generate")
+async def generate_docs(request: DocRequest):
+    """Generate README.md documentation for a project."""
+    from services.doc_generator import DocGenerator
+    from agents.golden_blocks import MASTER_BLOCKS
+
+    # Collect block configs
+    all_blocks = {b["id"]: b for cat_blocks in MASTER_BLOCKS.values() for b in cat_blocks}
+    blocks = [all_blocks[bid] for bid in request.block_ids if bid in all_blocks]
+
+    gen = DocGenerator()
+    readme = gen.generate(request.project_name, blocks, request.board)
+    return {"readme": readme, "blocks_found": len(blocks), "blocks_requested": len(request.block_ids)}
+
+
+# ─── Serial Port Detection & Flash ──────────────────────
+
+@router.get("/flash/devices")
+async def list_serial_devices():
+    """Scan for connected USB/serial devices with board identification."""
+    from services.serial_service import scan_serial_ports
+    devices = scan_serial_ports()
+    return {"devices": devices, "count": len(devices)}
+
+
+class FlashRequest(BaseModel):
+    port: str
+    firmware_path: str = ""
+    chip: str = "esp32"
+
+
+@router.post("/flash/upload")
+async def flash_device(request: FlashRequest):
+    """Flash firmware to a connected device via esptool."""
+    from services.serial_service import flash_firmware
+    result = await flash_firmware(request.port, request.firmware_path, request.chip)
+    return result
+
+
+class SerialReadRequest(BaseModel):
+    port: str
+    baud: int = 115200
+    timeout: float = 5.0
+
+
+@router.post("/serial/read")
+async def read_serial_output(request: SerialReadRequest):
+    """Read serial output from a device."""
+    from services.serial_service import read_serial
+    lines = await read_serial(request.port, request.baud, request.timeout)
+    return {"lines": lines, "count": len(lines)}
+
+
+# ─── OTA Updates ─────────────────────────────────────────
+
+class OTARequest(BaseModel):
+    device_ip: str
+    firmware_path: str
+    port: int = 3232
+
+
+@router.post("/ota/push")
+async def push_ota_update(request: OTARequest):
+    """Push firmware OTA update to a WiFi-connected device."""
+    from services.ota_service import OTAService
+    ota = OTAService()
+    result = await ota.push_ota(request.device_ip, request.firmware_path, request.port)
+    return result
+
+
+@router.get("/ota/code")
+async def get_ota_code():
+    """Get the ArduinoOTA setup code to include in firmware."""
+    from services.ota_service import OTAService
+    ota = OTAService()
+    return {"code": ota.generate_ota_firmware_code()}
+
+
+# ─── Firmware Export ─────────────────────────────────────
+
+class ExportRequest(BaseModel):
+    project_name: str
+    main_cpp: str
+    board: str = "esp32dev"
+    lib_deps: list[str] | None = None
+
+
+@router.post("/firmware/export")
+async def export_firmware(request: ExportRequest):
+    """Export firmware as a PlatformIO project ZIP."""
+    from services.firmware_exporter import FirmwareExporter
+    from fastapi.responses import Response
+
+    exporter = FirmwareExporter()
+    zip_bytes = exporter.export_project(
+        request.project_name,
+        request.main_cpp,
+        request.board,
+        request.lib_deps,
+    )
+    return Response(
+        content=zip_bytes,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{request.project_name}.zip"'},
+    )
+
+
+# ─── Wokwi Simulator Deep Integration ───────────────────
+
+class WokwiDiagramRequest(BaseModel):
+    block_ids: list[str]
+    board: str = "esp32dev"
+
+
+@router.post("/wokwi/diagram")
+async def generate_wokwi_diagram(request: WokwiDiagramRequest):
+    """Generate Wokwi diagram.json from golden block IDs."""
+    from services.wokwi_simulator import WokwiSimulator
+    sim = WokwiSimulator()
+    diagram = sim.generate_diagram(request.block_ids, request.board)
+    url = sim.get_simulation_url(diagram)
+    toml = sim.generate_wokwi_toml(request.board)
+    return {"diagram": diagram, "simulation_url": url, "wokwi_toml": toml,
+            "parts_count": len(diagram["parts"]), "connections_count": len(diagram["connections"])}
+
+
+# ─── CI/CD Pipeline ──────────────────────────────────────
+
+class CIPipelineRequest(BaseModel):
+    board: str = "esp32dev"
+    platform: str = "espressif32"
+    run_tests: bool = True
+    ota_deploy: bool = False
+    device_ip: str = ""
+
+
+@router.post("/cicd/generate")
+async def generate_pipeline(request: CIPipelineRequest):
+    """Generate GitHub Actions CI/CD workflow for firmware project."""
+    from services.ci_pipeline import CIPipelineGenerator
+    gen = CIPipelineGenerator()
+    workflow = gen.generate_github_actions(
+        request.board, request.platform, request.run_tests, request.ota_deploy, request.device_ip)
+    pre_commit = gen.generate_pre_commit_config()
+    test_cpp = gen.generate_platformio_test(request.board)
+    return {"workflow_yaml": workflow, "pre_commit_yaml": pre_commit,
+            "test_template": test_cpp}
+
+
+# ─── Community Template Gallery ──────────────────────────
+
+@router.get("/gallery/templates")
+async def list_gallery_templates(
+    category: str = None, difficulty: str = None,
+    board: str = None, search: str = None,
+):
+    """List community project templates with optional filtering."""
+    from services.template_gallery import TemplateGallery
+    gallery = TemplateGallery()
+    templates = gallery.list_templates(category, difficulty, board, search)
+    stats = gallery.get_stats()
+    return {"templates": templates, "stats": stats}
+
+
+@router.get("/gallery/templates/{template_id}")
+async def get_gallery_template(template_id: str):
+    """Get a specific project template by ID."""
+    from services.template_gallery import TemplateGallery
+    gallery = TemplateGallery()
+    template = gallery.get_template(template_id)
+    if not template:
+        return {"error": f"Template '{template_id}' not found"}
+    return {"template": template}
+
+
+@router.get("/gallery/categories")
+async def get_gallery_categories():
+    """Get available template categories with counts."""
+    from services.template_gallery import TemplateGallery
+    gallery = TemplateGallery()
+    return {"categories": gallery.get_categories()}

@@ -103,7 +103,7 @@ function RenderResults() {
       items={results}
       onRender={({ item, active }) =>
         typeof item === 'string' ? (
-          <div className="px-4 py-2 text-xs font-semibold uppercase tracking-wider"
+          <div className="px-4 py-2 text-xs font-semibold"
             style={{ color: 'var(--text-muted)' }}>
             {item}
           </div>

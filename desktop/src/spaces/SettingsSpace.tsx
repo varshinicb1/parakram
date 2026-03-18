@@ -4,7 +4,6 @@
  * Premium control panel for the entire Parakram OS.
  */
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Settings, Key, Cpu, User, CreditCard, Palette, Globe,
   Eye, EyeOff, Check, Save
@@ -77,7 +76,6 @@ export default function SettingsSpace() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [savedMsg, setSavedMsg] = useState('');
   const [theme, setTheme] = useState('dark');
-  const [accentColor, setAccentColor] = useState('#00ff88');
 
   useEffect(() => {
     fetch(`${API}/billing/plans`).then(r => r.json()).then(d => setPlans(d.plans || [])).catch(() => {});
@@ -87,7 +85,6 @@ export default function SettingsSpace() {
     localStorage.setItem('parakram_active_model', activeModel);
     localStorage.setItem('parakram_api_keys', JSON.stringify(apiKeys));
     localStorage.setItem('parakram_theme', theme);
-    localStorage.setItem('parakram_accent', accentColor);
     setSavedMsg('Settings saved!');
     setTimeout(() => setSavedMsg(''), 2000);
   };
@@ -101,186 +98,220 @@ export default function SettingsSpace() {
   ];
 
   return (
-    <div className="flex-1 flex overflow-hidden animate-fade-in">
+    <div className="flex-1 flex overflow-hidden">
       {/* Left: Tab Navigation */}
-      <div className="w-44 border-r flex flex-col shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-        <div className="px-3 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-          <h2 className="text-[8px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-muted)' }}>SETTINGS</h2>
+      <div className="w-56 border-r flex flex-col shrink-0 bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
+        <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>Settings</h2>
         </div>
-        {tabs.map(({ id, label, icon: Icon }) => (
-          <button key={id} onClick={() => setTab(id)}
-            className="flex items-center gap-2 px-3 py-2.5 text-[8px] tracking-widest uppercase font-bold transition-all text-left"
-            style={{
-              background: tab === id ? 'var(--accent-subtle)' : 'transparent',
-              color: tab === id ? 'var(--accent)' : 'var(--text-muted)',
-              borderLeft: tab === id ? '2px solid var(--accent)' : '2px solid transparent',
-            }}>
-            <Icon size={12} /> {label}
-          </button>
-        ))}
+        <div className="py-2">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setTab(id)}
+              className="flex items-center gap-3 w-[calc(100%-16px)] mx-2 px-3 py-2.5 text-sm font-medium transition-colors text-left rounded-lg my-0.5"
+              style={{
+                background: tab === id ? 'var(--bg-primary)' : 'transparent',
+                color: tab === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                boxShadow: tab === id ? '0 1px 2px rgba(0,0,0,0.05)' : 'none',
+                border: tab === id ? '1px solid var(--border)' : '1px solid transparent',
+              }}>
+              <Icon size={16} /> {label}
+            </button>
+          ))}
+        </div>
 
         {/* Save button */}
-        <div className="mt-auto p-3 border-t" style={{ borderColor: 'var(--border)' }}>
-          <motion.button onClick={saveSettings}
-            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-            className="w-full flex items-center justify-center gap-1 px-3 py-2 text-[8px] tracking-widest uppercase font-bold rounded-none"
-            style={{ background: 'var(--accent)', color: '#000' }}>
-            <Save size={10} /> SAVE ALL
-          </motion.button>
+        <div className="mt-auto p-4 border-t bg-[var(--bg-primary)]" style={{ borderColor: 'var(--border)' }}>
+          <button onClick={saveSettings}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors shadow-sm"
+            style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>
+            <Save size={16} /> Save Changes
+          </button>
           {savedMsg && (
-            <p className="text-center text-[7px] tracking-widest mt-1" style={{ color: '#22c55e' }}>
-              <Check size={9} className="inline" /> {savedMsg}
+            <p className="text-center text-xs font-medium mt-2 flex items-center justify-center gap-1" style={{ color: 'var(--success)' }}>
+              <Check size={14} /> {savedMsg}
             </p>
           )}
         </div>
       </div>
 
       {/* Right: Content */}
-      <div className="flex-1 overflow-y-auto p-5 space-y-5">
+      <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-[var(--bg-tertiary)]">
 
         {/* ── LLM Models ─────────────────────────────────── */}
         {tab === 'llm' && (
-          <>
-            <div>
-              <h3 className="text-[9px] tracking-widest uppercase font-bold mb-1" style={{ color: 'var(--text-primary)' }}>ACTIVE MODEL</h3>
-              <p className="text-[7px] tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Select the LLM used for firmware generation</p>
-              <div className="bg-transparent border rounded-none px-3 py-2 text-[10px] font-mono font-bold" style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+          <div className="max-w-4xl space-y-6">
+            <div className="bg-[var(--bg-primary)] border rounded-xl p-6 shadow-sm" style={{ borderColor: 'var(--border)' }}>
+              <h3 className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Active LLM Model</h3>
+              <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>This model will be used by default for firmware generation and analysis.</p>
+              <div className="bg-[var(--bg-secondary)] border rounded-lg px-4 py-2.5 text-sm font-mono font-bold" style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
                 {activeModel}
               </div>
             </div>
 
-            {providers.map(provider => (
-              <div key={provider.id} className="border rounded-none p-4 space-y-3" style={{ borderColor: 'var(--border)' }}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Globe size={13} style={{ color: provider.enabled ? 'var(--accent)' : 'var(--text-muted)' }} />
-                    <h4 className="text-[9px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>{provider.name}</h4>
-                    {provider.freeModels.length > 0 && (
-                      <span className="text-[6px] tracking-widest uppercase px-1.5 py-0.5 rounded-none" style={{ background: '#22c55e20', color: '#22c55e' }}>
-                        {provider.freeModels.length} FREE
-                      </span>
-                    )}
-                  </div>
-                  <label className="flex items-center gap-1 cursor-pointer">
-                    <span className="text-[7px] tracking-widest" style={{ color: 'var(--text-muted)' }}>
-                      {provider.enabled ? 'ON' : 'OFF'}
-                    </span>
-                    <div className="w-8 h-4 rounded-full relative cursor-pointer transition-all"
-                      style={{ background: provider.enabled ? 'var(--accent)' : 'var(--border)' }}
-                      onClick={() => {
-                        setProviders(p => p.map(pr => pr.id === provider.id ? { ...pr, enabled: !pr.enabled } : pr));
-                      }}>
-                      <div className="w-3 h-3 rounded-full absolute top-0.5 transition-all"
-                        style={{ background: '#000', left: provider.enabled ? '18px' : '2px' }} />
+            <h3 className="text-lg font-bold pt-2" style={{ color: 'var(--text-primary)' }}>Providers</h3>
+            <div className="space-y-4">
+              {providers.map(provider => (
+                <div key={provider.id} className="bg-[var(--bg-primary)] border rounded-xl p-6 shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <Globe size={18} style={{ color: provider.enabled ? 'var(--text-primary)' : 'var(--text-muted)' }} />
+                      <h4 className="text-base font-bold" style={{ color: 'var(--text-primary)', opacity: provider.enabled ? 1 : 0.6 }}>{provider.name}</h4>
+                      {provider.freeModels.length > 0 && provider.enabled && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: '#22c55e20', color: 'var(--success)' }}>
+                          {provider.freeModels.length} Free
+                        </span>
+                      )}
                     </div>
-                  </label>
-                </div>
-
-                {/* API Key */}
-                {provider.apiKeyEnv && (
-                  <div className="flex items-center gap-2">
-                    <Key size={10} style={{ color: 'var(--text-muted)' }} />
-                    <input
-                      type={showKeys[provider.id] ? 'text' : 'password'}
-                      value={apiKeys[provider.id] || ''}
-                      onChange={e => setApiKeys({ ...apiKeys, [provider.id]: e.target.value })}
-                      placeholder={`${provider.apiKeyEnv}...`}
-                      className="flex-1 bg-transparent border rounded-none px-2 py-1 text-[8px] font-mono outline-none"
-                      style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                    />
-                    <button onClick={() => setShowKeys({ ...showKeys, [provider.id]: !showKeys[provider.id] })}
-                      className="p-1" style={{ color: 'var(--text-muted)' }}>
-                      {showKeys[provider.id] ? <EyeOff size={11} /> : <Eye size={11} />}
-                    </button>
-                  </div>
-                )}
-
-                {/* Model list */}
-                <div className="grid grid-cols-2 gap-1">
-                  {provider.models.map(model => {
-                    const isFree = provider.freeModels.includes(model);
-                    const isActive = activeModel === model;
-                    return (
-                      <button key={model} onClick={() => setActiveModel(model)}
-                        className="flex items-center gap-1.5 px-2 py-1.5 border rounded-none text-left text-[7px] font-mono transition-all"
-                        style={{
-                          borderColor: isActive ? 'var(--accent)' : 'var(--border)',
-                          background: isActive ? 'var(--accent-subtle)' : 'transparent',
-                          color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                          {provider.enabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                        <div className="w-10 h-5 rounded-full relative cursor-pointer transition-colors"
+                        style={{ background: provider.enabled ? 'var(--text-primary)' : 'var(--border)' }}
+                        onClick={() => {
+                          setProviders(p => p.map(pr => pr.id === provider.id ? { ...pr, enabled: !pr.enabled } : pr));
                         }}>
-                        {isActive && <Check size={8} />}
-                        <span className="truncate">{model.split('/').pop()}</span>
-                        {isFree && <span className="ml-auto text-[5px] tracking-widest" style={{ color: '#22c55e' }}>FREE</span>}
-                      </button>
-                    );
-                  })}
+                        <div className="w-4 h-4 rounded-full absolute top-0.5 transition-transform bg-[var(--bg-primary)]"
+                          style={{ left: provider.enabled ? '22px' : '2px', transform: 'translateX(0)' }} />
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className={`space-y-4 transition-opacity duration-200 ${provider.enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                    {provider.apiKeyEnv && (
+                      <div className="flex items-center gap-3 bg-[var(--bg-secondary)] border rounded-lg px-3 py-1.5 focus-within:border-[var(--text-primary)] transition-colors" style={{ borderColor: 'var(--border)' }}>
+                        <Key size={16} style={{ color: 'var(--text-muted)' }} />
+                        <input
+                          type={showKeys[provider.id] ? 'text' : 'password'}
+                          value={apiKeys[provider.id] || ''}
+                          onChange={e => setApiKeys({ ...apiKeys, [provider.id]: e.target.value })}
+                          placeholder={`Enter ${provider.apiKeyEnv}...`}
+                          className="flex-1 bg-transparent border-none text-sm font-mono outline-none py-1"
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                        <button onClick={() => setShowKeys({ ...showKeys, [provider.id]: !showKeys[provider.id] })}
+                          className="p-1.5 hover:bg-[var(--border)] rounded transition-colors" style={{ color: 'var(--text-muted)' }}>
+                          {showKeys[provider.id] ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Model list */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {provider.models.map(model => {
+                        const isFree = provider.freeModels.includes(model);
+                        const isActive = activeModel === model;
+                        return (
+                          <button key={model} onClick={() => setActiveModel(model)}
+                            className="flex items-center gap-3 px-3 py-2.5 border rounded-lg text-left text-sm font-mono transition-colors"
+                            style={{
+                              borderColor: isActive ? 'var(--text-primary)' : 'var(--border)',
+                              background: isActive ? 'var(--bg-secondary)' : 'transparent',
+                              color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                            }}>
+                            <div className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0"
+                              style={{ 
+                                borderColor: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                                background: isActive ? 'var(--text-primary)' : 'transparent' 
+                              }}>
+                              {isActive && <Check size={10} className="text-[var(--bg-primary)]" strokeWidth={3} />}
+                            </div>
+                            <span className="truncate flex-1">{model.split('/').pop()}</span>
+                            {isFree && <span className="text-[10px] font-bold tracking-widest px-1.5 py-0.5 rounded uppercase" style={{ background: '#22c55e20', color: 'var(--success)' }}>Free</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ── Account ────────────────────────────────────── */}
         {tab === 'account' && (
-          <div className="space-y-4 max-w-lg">
-            <h3 className="text-[9px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>ACCOUNT SETTINGS</h3>
-            {[
-              { label: 'Display Name', placeholder: 'Your name', type: 'text' },
-              { label: 'Email', placeholder: 'you@example.com', type: 'email' },
-              { label: 'Organization', placeholder: 'Your company (optional)', type: 'text' },
-            ].map(field => (
-              <div key={field.label}>
-                <label className="text-[7px] tracking-widest uppercase font-bold block mb-1" style={{ color: 'var(--text-muted)' }}>{field.label}</label>
-                <input type={field.type} placeholder={field.placeholder}
-                  className="w-full bg-transparent border rounded-none px-3 py-2 text-[9px] tracking-wider outline-none"
+          <div className="space-y-6 max-w-xl bg-[var(--bg-primary)] border rounded-xl p-8 shadow-sm" style={{ borderColor: 'var(--border)' }}>
+            <div>
+              <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Account Profile</h3>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Manage your personal information and credentials.</p>
+            </div>
+            
+            <div className="space-y-4 pt-2">
+              {[
+                { label: 'Display Name', placeholder: 'Your name', type: 'text' },
+                { label: 'Email', placeholder: 'you@example.com', type: 'email' },
+                { label: 'Organization', placeholder: 'Your company (optional)', type: 'text' },
+              ].map(field => (
+                <div key={field.label}>
+                  <label className="text-sm font-medium block mb-1.5" style={{ color: 'var(--text-primary)' }}>{field.label}</label>
+                  <input type={field.type} placeholder={field.placeholder}
+                    className="w-full bg-[var(--bg-secondary)] border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[var(--text-primary)] transition-colors"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
+                </div>
+              ))}
+            </div>
+            
+            <div className="pt-4 border-t space-y-4" style={{ borderColor: 'var(--border)' }}>
+              <h4 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Change Password</h4>
+              <div>
+                <label className="text-sm font-medium block mb-1.5" style={{ color: 'var(--text-primary)' }}>New Password</label>
+                <input type="password" placeholder="••••••••"
+                  className="w-full bg-[var(--bg-secondary)] border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[var(--text-primary)] transition-colors mb-3"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
+                <label className="text-sm font-medium block mb-1.5" style={{ color: 'var(--text-primary)' }}>Confirm Password</label>
+                <input type="password" placeholder="••••••••"
+                  className="w-full bg-[var(--bg-secondary)] border rounded-lg px-4 py-2.5 text-sm outline-none focus:border-[var(--text-primary)] transition-colors"
                   style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
               </div>
-            ))}
-            <div>
-              <label className="text-[7px] tracking-widest uppercase font-bold block mb-1" style={{ color: 'var(--text-muted)' }}>CHANGE PASSWORD</label>
-              <input type="password" placeholder="New password"
-                className="w-full bg-transparent border rounded-none px-3 py-2 text-[9px] tracking-wider outline-none mb-1"
-                style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
-              <input type="password" placeholder="Confirm password"
-                className="w-full bg-transparent border rounded-none px-3 py-2 text-[9px] tracking-wider outline-none"
-                style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
             </div>
           </div>
         )}
 
         {/* ── Billing ────────────────────────────────────── */}
         {tab === 'billing' && (
-          <div className="space-y-4">
-            <h3 className="text-[9px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>SUBSCRIPTION PLANS</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="space-y-6 max-w-5xl">
+            <div>
+              <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Subscription Plans</h3>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Choose the plan that best fits your development needs.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {plans.map(plan => (
-                <div key={plan.id} className="border rounded-none p-4 space-y-3"
+                <div key={plan.id} className="bg-[var(--bg-primary)] border rounded-xl p-6 space-y-5 flex flex-col shadow-sm transition-shadow hover:shadow-md relative"
                   style={{
-                    borderColor: plan.id === 'free' ? 'var(--accent)' : 'var(--border)',
-                    background: plan.id === 'free' ? 'var(--accent-subtle)' : 'var(--bg-secondary)',
+                    borderColor: plan.id === 'free' ? 'var(--text-primary)' : 'var(--border)',
                   }}>
+                  {plan.id === 'free' && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-bold bg-[var(--text-primary)] shadow-sm whitespace-nowrap" style={{ color: 'var(--bg-primary)' }}>
+                      Current Plan
+                    </div>
+                  )}
                   <div>
-                    <h4 className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>{plan.name}</h4>
-                    <p className="text-lg font-black" style={{ color: 'var(--accent)' }}>
-                      {plan.price === 0 ? 'FREE' : plan.price === -1 ? 'CUSTOM' : `$${plan.price}/mo`}
+                    <h4 className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>{plan.name}</h4>
+                    <p className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                      {plan.price === 0 ? 'Free' : plan.price === -1 ? 'Custom' : `$${plan.price}`}
+                      {plan.price > 0 && <span className="text-sm font-normal" style={{ color: 'var(--text-muted)' }}>/mo</span>}
                     </p>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-3 flex-1 pt-2">
                     {Object.entries(plan.features || {}).map(([key, val]) => (
-                      <div key={key} className="flex items-center justify-between text-[7px] tracking-wider">
-                        <span style={{ color: 'var(--text-muted)' }}>{key.replace(/_/g, ' ')}</span>
-                        <span style={{ color: val === true ? '#22c55e' : val === false ? '#ef4444' : 'var(--text-primary)' }}>
-                          {val === true ? '✓' : val === false ? '✗' : String(val)}
+                      <div key={key} className="flex items-center gap-3 text-sm">
+                        <span className="w-4 flex justify-center" style={{ color: val === true ? 'var(--success)' : val === false ? 'var(--text-muted)' : 'var(--text-primary)' }}>
+                          {val === true ? '✓' : val === false ? '—' : '✓'}
+                        </span>
+                        <span style={{ color: val === false ? 'var(--text-muted)' : 'var(--text-secondary)' }}>
+                          {key.replace(/_/g, ' ')} {val !== true && val !== false ? `(${val})` : ''}
                         </span>
                       </div>
                     ))}
                   </div>
-                  <button className="w-full px-3 py-1.5 text-[7px] tracking-widest uppercase font-bold border rounded-none"
+                  <button className="w-full px-4 py-2.5 text-sm font-semibold rounded-lg transition-colors border"
                     style={{
-                      borderColor: plan.id === 'free' ? 'var(--accent)' : 'var(--border)',
-                      color: plan.id === 'free' ? 'var(--accent)' : 'var(--text-muted)',
+                      borderColor: plan.id === 'free' ? 'var(--border)' : 'var(--text-primary)',
+                      background: plan.id === 'free' ? 'transparent' : 'var(--text-primary)',
+                      color: plan.id === 'free' ? 'var(--text-muted)' : 'var(--bg-primary)',
                     }}>
-                    {plan.id === 'free' ? 'CURRENT PLAN' : 'UPGRADE'}
+                    {plan.id === 'free' ? 'Active' : 'Upgrade'}
                   </button>
                 </div>
               ))}
@@ -290,73 +321,92 @@ export default function SettingsSpace() {
 
         {/* ── Appearance ─────────────────────────────────── */}
         {tab === 'appearance' && (
-          <div className="space-y-4 max-w-lg">
-            <h3 className="text-[9px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>APPEARANCE</h3>
+          <div className="space-y-8 max-w-xl bg-[var(--bg-primary)] border rounded-xl p-8 shadow-sm" style={{ borderColor: 'var(--border)' }}>
             <div>
-              <label className="text-[7px] tracking-widest uppercase font-bold block mb-2" style={{ color: 'var(--text-muted)' }}>THEME</label>
-              <div className="flex gap-2">
-                {['dark', 'light', 'midnight', 'matrix'].map(t => (
-                  <button key={t} onClick={() => setTheme(t)}
-                    className="px-3 py-1.5 text-[7px] tracking-widest uppercase font-bold border rounded-none"
-                    style={{
-                      borderColor: theme === t ? 'var(--accent)' : 'var(--border)',
-                      color: theme === t ? 'var(--accent)' : 'var(--text-muted)',
-                      background: theme === t ? 'var(--accent-subtle)' : 'transparent',
-                    }}>{t}</button>
-                ))}
-              </div>
+              <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Appearance</h3>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Customize the visual experience of your workspace.</p>
             </div>
-            <div>
-              <label className="text-[7px] tracking-widest uppercase font-bold block mb-2" style={{ color: 'var(--text-muted)' }}>ACCENT COLOR</label>
-              <div className="flex gap-2">
-                {['#00ff88', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'].map(c => (
-                  <button key={c} onClick={() => setAccentColor(c)}
-                    className="w-7 h-7 rounded-none border-2 transition-all"
-                    style={{
-                      background: c,
-                      borderColor: accentColor === c ? '#fff' : 'transparent',
-                      transform: accentColor === c ? 'scale(1.2)' : 'scale(1)',
-                    }} />
-                ))}
+            
+            <div className="space-y-6 pt-2">
+              <div>
+                <label className="text-sm font-medium block mb-3" style={{ color: 'var(--text-primary)' }}>Color Theme</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'dark', label: 'Dark' },
+                    { id: 'light', label: 'Light' },
+                    { id: 'midnight', label: 'Midnight' },
+                    { id: 'zinc', label: 'Zinc (V4 SaaS)' }
+                  ].map(t => (
+                    <button key={t.id} onClick={() => setTheme(t.id)}
+                      className="px-4 py-3 text-sm font-medium border rounded-lg transition-all flex flex-col items-center gap-2 shadow-sm hover:shadow"
+                      style={{
+                        borderColor: theme === t.id ? 'var(--text-primary)' : 'var(--border)',
+                        color: theme === t.id ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        background: theme === t.id ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+                      }}>
+                      <div className="w-8 h-8 rounded-full border shadow-sm" style={{ 
+                        background: t.id === 'light' ? '#f4f4f5' : t.id === 'dark' ? '#18181b' : t.id === 'midnight' ? '#0f172a' : '#27272a',
+                        borderColor: 'var(--border)'
+                      }} />
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="text-[7px] tracking-widest uppercase font-bold block mb-2" style={{ color: 'var(--text-muted)' }}>FONT SIZE</label>
-              <input type="range" min="10" max="16" defaultValue="12" className="w-full" />
+              
+              <div className="pt-4 border-t" style={{ borderColor: 'var(--border)' }}>
+                <label className="text-sm font-medium block mb-3" style={{ color: 'var(--text-primary)' }}>Editor Font Size</label>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Small</span>
+                  <input type="range" min="10" max="18" defaultValue="14" className="flex-1 accent-[var(--text-primary)]" />
+                  <span className="text-lg" style={{ color: 'var(--text-primary)' }}>Large</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
         {/* ── Advanced ───────────────────────────────────── */}
         {tab === 'advanced' && (
-          <div className="space-y-4 max-w-lg">
-            <h3 className="text-[9px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>ADVANCED SETTINGS</h3>
-            {[
-              { label: 'PlatformIO Path', value: '~/.platformio', desc: 'PlatformIO installation directory' },
-              { label: 'Projects Directory', value: './projects', desc: 'Default project storage' },
-              { label: 'Ollama URL', value: 'http://localhost:11434', desc: 'Local Ollama server' },
-              { label: 'Backend URL', value: 'http://localhost:8000', desc: 'API server address' },
-              { label: 'Serial Baud Rate', value: '115200', desc: 'Default serial monitor speed' },
-            ].map(setting => (
-              <div key={setting.label}>
-                <label className="text-[7px] tracking-widest uppercase font-bold block mb-0.5" style={{ color: 'var(--text-muted)' }}>{setting.label}</label>
-                <p className="text-[6px] tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{setting.desc}</p>
-                <input defaultValue={setting.value}
-                  className="w-full bg-transparent border rounded-none px-3 py-1.5 text-[9px] font-mono outline-none"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
-              </div>
-            ))}
+          <div className="space-y-6 max-w-xl bg-[var(--bg-primary)] border rounded-xl p-8 shadow-sm" style={{ borderColor: 'var(--border)' }}>
+            <div>
+              <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Advanced Settings</h3>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Configure core system paths and network preferences.</p>
+            </div>
+            
+            <div className="space-y-4 pt-2">
+              {[
+                { label: 'PlatformIO Path', value: '~/.platformio', desc: 'PlatformIO installation directory' },
+                { label: 'Projects Directory', value: './projects', desc: 'Default project storage' },
+                { label: 'Ollama Instance URL', value: 'http://localhost:11434', desc: 'Local endpoint for Ollama' },
+                { label: 'Backend API URL', value: 'http://localhost:8000', desc: 'Core server address' },
+                { label: 'Default Serial Baud Rate', value: '115200', desc: 'Terminal monitor speed' },
+              ].map(setting => (
+                <div key={setting.label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{setting.label}</label>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{setting.desc}</span>
+                  </div>
+                  <input defaultValue={setting.value}
+                    className="w-full bg-[var(--bg-secondary)] border rounded-lg px-4 py-2.5 text-sm font-mono outline-none focus:border-[var(--text-primary)] transition-colors"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
+                </div>
+              ))}
+            </div>
 
-            <div className="border-t pt-4 space-y-2" style={{ borderColor: 'var(--border)' }}>
-              <h4 className="text-[7px] tracking-widest uppercase font-bold" style={{ color: '#ef4444' }}>DANGER ZONE</h4>
-              <button className="px-3 py-1.5 text-[7px] tracking-widest uppercase font-bold border rounded-none"
-                style={{ borderColor: '#ef4444', color: '#ef4444' }}>
-                CLEAR ALL DATA
-              </button>
-              <button className="px-3 py-1.5 text-[7px] tracking-widest uppercase font-bold border rounded-none ml-2"
-                style={{ borderColor: '#f59e0b', color: '#f59e0b' }}>
-                RESET SETTINGS
-              </button>
+            <div className="pt-6 border-t space-y-4" style={{ borderColor: 'var(--border)' }}>
+              <h4 className="text-sm font-bold" style={{ color: 'var(--error)' }}>Danger Zone</h4>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>These actions cannot be undone and will permanently delete data.</p>
+              <div className="flex items-center gap-3">
+                <button className="px-5 py-2.5 text-sm font-semibold border rounded-lg transition-colors"
+                  style={{ borderColor: 'var(--error)', border: '1px solid var(--error)', color: 'var(--error)' }}>
+                  Clear All App Data
+                </button>
+                <button className="px-5 py-2.5 text-sm font-semibold border rounded-lg transition-colors bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+                  Restore Defaults
+                </button>
+              </div>
             </div>
           </div>
         )}

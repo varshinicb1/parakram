@@ -22,6 +22,8 @@
     "@xterm/xterm": "^6.0.0",
     "@xyflow/react": "^12.10.1",
     "animejs": "^4.3.6",
+    "dexie": "^4.3.0",
+    "dexie-react-hooks": "^4.2.0",
     "framer-motion": "^12.35.2",
     "kbar": "^0.1.0-beta.48",
     "lucide-react": "^0.577.0",

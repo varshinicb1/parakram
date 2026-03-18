@@ -1,65 +1,28 @@
 {
-    "id": "i2c_oled",
-    "name": "I2C OLED Display",
-    "category": "display",
-    "description": "SSD1306 128x64 OLED display via I2C.",
-    "inputs": [
-        {
-            "name": "text",
-            "data_type": "string",
-            "description": "Text to display"
-        }
-    ],
-    "outputs": [
-        {
-            "name": "ready",
-            "data_type": "bool"
-        }
-    ],
-    "configuration": [
-        {
-            "key": "width",
-            "label": "Width",
-            "value_type": "int",
-            "default": "128"
-        },
-        {
-            "key": "height",
-            "label": "Height",
-            "value_type": "int",
-            "default": "64"
-        },
-        {
-            "key": "i2c_address",
-            "label": "I2C Address",
-            "value_type": "string",
-            "default": "0x3C"
-        },
-        {
-            "key": "sda_pin",
-            "label": "SDA Pin",
-            "value_type": "int",
-            "default": "21"
-        },
-        {
-            "key": "scl_pin",
-            "label": "SCL Pin",
-            "value_type": "int",
-            "default": "22"
-        }
-    ],
-    "libraries": [
-        "adafruit/Adafruit SSD1306@^2.5.0",
-        "adafruit/Adafruit GFX Library@^1.11.0"
-    ],
-    "firmware_template": {
-        "header": "#ifndef I2C_OLED_H\n#define I2C_OLED_H\n#include <Arduino.h>\n#include <Adafruit_SSD1306.h>\n\nvoid oled_setup();\nvoid oled_clear();\nvoid oled_text(const char* text, int x, int y, int size = 1);\nvoid oled_value(const char* label, float value, int x, int y);\nvoid oled_progress(int x, int y, int w, int h, float percent);\nvoid oled_display();\n\n#endif",
-        "source": "#include \"i2c_oled.h\"\n#include <Wire.h>\n\n#define SCREEN_W 128\n#define SCREEN_H 64\n\nstatic Adafruit_SSD1306 _oled(SCREEN_W, SCREEN_H, &Wire, -1);\n\nvoid oled_setup() {\n    Wire.begin(21, 22);\n    if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {\n        Serial.println(\"[oled] SSD1306 failed!\");\n        return;\n    }\n    _oled.clearDisplay();\n    _oled.setTextSize(1);\n    _oled.setTextColor(SSD1306_WHITE);\n    _oled.setCursor(0, 0);\n    _oled.println(\"Parakram AI\");\n    _oled.display();\n    Serial.println(\"[oled] SSD1306 ready\");\n}\n\nvoid oled_clear() {\n    _oled.clearDisplay();\n}\n\nvoid oled_text(const char* text, int x, int y, int size) {\n    _oled.setTextSize(size);\n    _oled.setCursor(x, y);\n    _oled.print(text);\n}\n\nvoid oled_value(const char* label, float value, int x, int y) {\n    _oled.setCursor(x, y);\n    _oled.printf(\"%s: %.1f\", label, value);\n}\n\nvoid oled_progress(int x, int y, int w, int h, float percent) {\n    _oled.drawRect(x, y, w, h, SSD1306_WHITE);\n    int fillW = (int)(w * percent / 100.0f);\n    _oled.fillRect(x, y, fillW, h, SSD1306_WHITE);\n}\n\nvoid oled_display() {\n    _oled.display();\n}"
-    },
-    "icon": "📟",
-    "color": "#64748b",
-    "memory_estimate": {
-        "flash": 30000,
-        "sram": 2048
-    }
+  "id": "i2c_oled",
+  "name": "SSD1306 OLED 128x64",
+  "category": "display",
+  "description": "SSD1306 OLED 128x64 firmware block",
+  "libraries": [
+    "Wire.h",
+    "Adafruit_SSD1306.h"
+  ],
+  "pins": {
+    "sda": 21,
+    "scl": 22
+  },
+  "bus": "I2C",
+  "i2c_address": "0x3C",
+  "platformio_deps": [
+    "adafruit/Adafruit SSD1306@^2.5.9",
+    "adafruit/Adafruit GFX Library@^1.11.9"
+  ],
+  "firmware_template": {
+    "header": "#ifndef I2C_OLED_H\n#define I2C_OLED_H\n#include <Adafruit_SSD1306.h>\nvoid oled_setup();\nvoid oled_clear();\nvoid oled_text(int x, int y, const char* text, int size);\nvoid oled_update();\nvoid oled_draw_rect(int x, int y, int w, int h);\nvoid oled_draw_progress(int x, int y, int w, int h, int percent);\n#endif",
+    "source": "#include \"i2c_oled.h\"\n#include <Wire.h>\n#include <Adafruit_GFX.h>\nstatic Adafruit_SSD1306 display(128, 64, &Wire, -1);\nvoid oled_setup() {\n  Wire.begin();\n  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {\n    Serial.println(\"[oled] Init failed!\"); return;\n  }\n  display.clearDisplay();\n  display.setTextColor(SSD1306_WHITE);\n  display.display();\n  Serial.println(\"[oled] OK 128x64\");\n}\nvoid oled_clear() { display.clearDisplay(); }\nvoid oled_text(int x, int y, const char* t, int s) {\n  display.setTextSize(s); display.setCursor(x, y); display.print(t);\n}\nvoid oled_update() { display.display(); }\nvoid oled_draw_rect(int x, int y, int w, int h) { display.drawRect(x,y,w,h,SSD1306_WHITE); }\nvoid oled_draw_progress(int x, int y, int w, int h, int pct) {\n  display.drawRect(x,y,w,h,SSD1306_WHITE);\n  int fill = (w-2) * constrain(pct,0,100) / 100;\n  display.fillRect(x+1,y+1,fill,h-2,SSD1306_WHITE);\n}"
+  },
+  "configurable_params": {},
+  "outputs": {},
+  "verified": true,
+  "anti_hallucination": true
 }

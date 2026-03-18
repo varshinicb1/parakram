@@ -3,7 +3,6 @@
  * Manages PlatformIO, ESP-IDF, Arduino CLI, and library installations.
  */
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   Download, Package, Wrench, Check, Loader2,
   HardDrive
@@ -89,125 +88,144 @@ export default function InstallerSpace() {
   const installedLibraries = libraries.filter(l => l.installed).length;
 
   return (
-    <div className="flex-1 overflow-y-auto animate-fade-in">
-      <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-6xl mx-auto px-8 py-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold tracking-widest uppercase flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
-            <Download size={20} style={{ color: 'var(--accent)' }} />
-            UNIVERSAL INSTALLER
-          </h1>
-          <div className="flex items-center gap-3">
-            <span className="text-[8px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-muted)' }}>
-              {installedToolchains}/{toolchains.length} TOOLCHAINS · {installedLibraries}/{libraries.length} LIBRARIES
-            </span>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center gap-3" style={{ color: 'var(--text-primary)' }}>
+              <Download size={24} style={{ color: 'var(--text-primary)' }} />
+              Universal Installer
+            </h1>
+            <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+              Manage system toolchains, frameworks, and shared libraries.
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-sm font-semibold px-4 py-2 bg-[var(--bg-secondary)] border rounded-lg" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+            <span><strong style={{ color: 'var(--text-primary)' }}>{installedToolchains} / {toolchains.length}</strong> Toolchains</span>
+            <span className="w-1 h-1 rounded-full" style={{ background: 'var(--border)' }} />
+            <span><strong style={{ color: 'var(--text-primary)' }}>{installedLibraries} / {libraries.length}</strong> Libraries</span>
           </div>
         </div>
 
-        {/* Tab nav */}
-        <div className="flex items-center gap-1 mb-6 border-b" style={{ borderColor: 'var(--border)' }}>
-          {([['toolchains', 'TOOLCHAINS', Wrench], ['libraries', 'LIBRARIES', Package]] as const).map(([id, label, Icon]) => (
-            <button key={id} onClick={() => setActiveTab(id)}
-              className="flex items-center gap-2 px-4 py-2.5 text-[9px] tracking-widest uppercase font-bold border-b-2 transition-all"
-              style={{
-                borderBottomColor: activeTab === id ? 'var(--accent)' : 'transparent',
-                color: activeTab === id ? 'var(--accent)' : 'var(--text-muted)',
-              }}>
-              <Icon size={13} /> {label}
-            </button>
-          ))}
+        {/* Tab nav & Actions */}
+        <div className="flex items-center justify-between mb-8 border-b" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex items-center gap-2">
+            {([['toolchains', 'Compiler Toolchains', Wrench], ['libraries', 'Global Libraries', Package]] as const).map(([id, label, Icon]) => (
+              <button key={id} onClick={() => setActiveTab(id)}
+                className="flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors hover:bg-[var(--bg-secondary)] rounded-t-lg"
+                style={{
+                  borderBottomColor: activeTab === id ? 'var(--text-primary)' : 'transparent',
+                  color: activeTab === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                }}>
+                <Icon size={16} /> {label}
+              </button>
+            ))}
+          </div>
+
           {activeTab === 'libraries' && (
             <button onClick={installAllLibraries}
-              className="ml-auto flex items-center gap-1 px-3 py-1.5 rounded-none border text-[8px] tracking-widest uppercase font-bold"
-              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
-              <Download size={10} /> INSTALL ALL
+              className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors border shadow-sm mb-2"
+              style={{ borderColor: 'var(--text-primary)', background: 'var(--text-primary)', color: 'var(--bg-primary)' }}>
+              <Download size={16} /> Install All Missing
             </button>
           )}
         </div>
 
         {/* Toolchains */}
         {activeTab === 'toolchains' && (
-          <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {toolchains.map(tc => (
-              <motion.div key={tc.id}
-                className="border rounded-none p-4 flex items-center gap-4 transition-all"
-                style={{ borderColor: tc.installed ? 'var(--accent)' : 'var(--border)', background: 'var(--bg-secondary)' }}
-                whileHover={{ x: 2 }}>
-                <div className="w-10 h-10 flex items-center justify-center border rounded-none"
-                  style={{ borderColor: tc.installed ? 'var(--accent)' : 'var(--border)', color: tc.installed ? 'var(--accent)' : 'var(--text-muted)' }}>
-                  {tc.installed ? <Check size={18} /> : <HardDrive size={18} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>{tc.name}</span>
-                    <span className="text-[7px] font-mono px-1.5 py-0.5 border rounded-none" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>v{tc.version}</span>
-                    <span className="text-[7px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>{tc.size}</span>
+              <div key={tc.id}
+                className="bg-[var(--bg-primary)] border rounded-xl p-6 flex flex-col transition-shadow hover:shadow-md"
+                style={{ borderColor: tc.installed ? 'var(--text-primary)' : 'var(--border)' }}>
+                
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-[var(--bg-secondary)] border shrink-0"
+                    style={{ borderColor: tc.installed ? 'var(--text-primary)' : 'var(--border)', color: tc.installed ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                    {tc.installed ? <Check size={24} /> : <HardDrive size={24} />}
                   </div>
-                  <p className="text-[8px] tracking-wider mt-0.5" style={{ color: 'var(--text-muted)' }}>{tc.description}</p>
-                  {tc.installing && (
-                    <div className="mt-2 h-1 rounded-none overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
-                      <motion.div className="h-full" style={{ background: 'var(--accent)', width: `${installProgress[tc.id] || 0}%` }}
-                        animate={{ width: `${installProgress[tc.id] || 0}%` }} />
-                    </div>
+                  
+                  {tc.installed ? (
+                    <span className="text-xs font-bold flex items-center gap-1 px-3 py-1 bg-[var(--bg-secondary)] border rounded-full" style={{ color: 'var(--text-primary)', borderColor: 'var(--text-primary)' }}>
+                       Installed
+                    </span>
+                  ) : tc.installing ? (
+                    <span className="text-xs font-bold flex items-center gap-2 px-3 py-1 bg-[var(--bg-secondary)] border rounded-full" style={{ color: 'var(--text-primary)', borderColor: 'var(--border)' }}>
+                      <Loader2 size={14} className="animate-spin" /> {(installProgress[tc.id] || 0).toFixed(0)}%
+                    </span>
+                  ) : (
+                    <button onClick={() => simulateInstall(tc.id, 'toolchain')}
+                      className="flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-bold transition-colors hover:bg-[var(--bg-secondary)]"
+                      style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+                      <Download size={14} /> Install
+                    </button>
                   )}
                 </div>
-                {tc.installed ? (
-                  <span className="text-[8px] tracking-widest uppercase font-bold flex items-center gap-1" style={{ color: 'var(--accent)' }}>
-                    <Check size={10} /> INSTALLED
-                  </span>
-                ) : tc.installing ? (
-                  <span className="text-[8px] tracking-widest uppercase font-bold flex items-center gap-1" style={{ color: 'var(--accent)' }}>
-                    <Loader2 size={10} className="animate-spin" /> {(installProgress[tc.id] || 0).toFixed(0)}%
-                  </span>
-                ) : (
-                  <motion.button onClick={() => simulateInstall(tc.id, 'toolchain')}
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-none border text-[8px] tracking-widest uppercase font-bold"
-                    style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
-                    <Download size={10} /> INSTALL
-                  </motion.button>
+
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{tc.name}</span>
+                    <span className="text-xs font-mono px-2 py-0.5 bg-[var(--bg-secondary)] rounded-md border" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>v{tc.version}</span>
+                    <span className="text-xs font-medium px-2 py-0.5 bg-[var(--bg-secondary)] rounded-md border" style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>{tc.size}</span>
+                  </div>
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>{tc.description}</p>
+                </div>
+
+                {tc.installing && (
+                  <div className="mt-5 h-1.5 rounded-full overflow-hidden bg-[var(--bg-secondary)] border" style={{ borderColor: 'var(--border)' }}>
+                    <div className="h-full bg-[var(--text-primary)] transition-all duration-300 ease-out" style={{ width: `${installProgress[tc.id] || 0}%` }} />
+                  </div>
                 )}
-              </motion.div>
+              </div>
             ))}
           </div>
         )}
 
         {/* Libraries */}
         {activeTab === 'libraries' && (
-          <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {libraries.map(lib => (
-              <motion.div key={lib.id}
-                className="border rounded-none px-4 py-3 flex items-center gap-3 transition-all"
-                style={{ borderColor: lib.installed ? 'var(--accent)' : 'var(--border)', background: 'var(--bg-secondary)' }}
-                whileHover={{ x: 2 }}>
-                <div className="w-7 h-7 flex items-center justify-center border rounded-none"
-                  style={{ borderColor: lib.installed ? 'var(--accent)' : 'var(--border)', color: lib.installed ? 'var(--accent)' : 'var(--text-muted)' }}>
-                  {lib.installed ? <Check size={14} /> : <Package size={14} />}
+              <div key={lib.id}
+                className="bg-[var(--bg-primary)] border rounded-xl p-5 flex items-start gap-4 transition-all hover:border-[var(--text-muted)] hover:shadow-sm"
+                style={{ borderColor: lib.installed ? 'var(--text-primary)' : 'var(--border)' }}>
+                
+                <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-[var(--bg-secondary)] border shrink-0"
+                  style={{ borderColor: lib.installed ? 'var(--text-primary)' : 'var(--border)', color: lib.installed ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                  {lib.installed ? <Check size={20} /> : <Package size={20} />}
                 </div>
+
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>{lib.name}</span>
-                    <span className="text-[7px] font-mono" style={{ color: 'var(--text-muted)' }}>v{lib.version} · {lib.author}</span>
+                  <div className="flex justify-between items-start mb-1 gap-2">
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{lib.name}</span>
+                      <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>v{lib.version} · {lib.author}</span>
+                    </div>
+
+                    <div className="shrink-0 flex items-center">
+                      {lib.installed ? (
+                        <span className="text-xs font-semibold px-2 py-1 bg-[var(--bg-secondary)] rounded-md border" style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}>Installed</span>
+                      ) : lib.installing ? (
+                        <Loader2 size={18} className="animate-spin" style={{ color: 'var(--text-primary)' }} />
+                      ) : (
+                        <button onClick={() => simulateInstall(lib.id, 'library')}
+                          className="text-xs font-semibold px-3 py-1 rounded-md border hover:bg-[var(--bg-secondary)] transition-colors" 
+                          style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}>
+                          Install
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[7px] tracking-wider" style={{ color: 'var(--text-muted)' }}>{lib.description}</p>
+                  
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{lib.description}</p>
+                  
                   {lib.installing && (
-                    <div className="mt-1 h-0.5 rounded-none overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
-                      <motion.div className="h-full" style={{ background: 'var(--accent)', width: `${installProgress[lib.id] || 0}%` }}
-                        animate={{ width: `${installProgress[lib.id] || 0}%` }} />
+                    <div className="mt-3 h-1 rounded-full overflow-hidden bg-[var(--bg-secondary)] border" style={{ borderColor: 'var(--border)' }}>
+                      <div className="h-full bg-[var(--text-primary)] transition-all duration-300 ease-out" style={{ width: `${installProgress[lib.id] || 0}%` }} />
                     </div>
                   )}
                 </div>
-                {lib.installed ? (
-                  <Check size={12} style={{ color: 'var(--accent)' }} />
-                ) : lib.installing ? (
-                  <Loader2 size={12} className="animate-spin" style={{ color: 'var(--accent)' }} />
-                ) : (
-                  <button onClick={() => simulateInstall(lib.id, 'library')}
-                    className="text-[8px] tracking-widest uppercase font-bold hover:underline" style={{ color: 'var(--accent)' }}>
-                    INSTALL
-                  </button>
-                )}
-              </motion.div>
+              </div>
             ))}
           </div>
         )}

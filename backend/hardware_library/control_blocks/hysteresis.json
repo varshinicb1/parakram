@@ -1,40 +1,19 @@
 {
-    "id": "hysteresis",
-    "name": "Hysteresis",
-    "category": "control",
-    "description": "Prevents output oscillation using separate on/off thresholds (Schmitt trigger).",
-    "inputs": [
-        {
-            "name": "value",
-            "data_type": "float",
-            "description": "Input measurement"
-        }
-    ],
-    "outputs": [
-        {
-            "name": "active",
-            "data_type": "bool",
-            "description": "True when above high threshold, false when below low"
-        }
-    ],
-    "configuration": [
-        {
-            "key": "high_threshold",
-            "label": "High Threshold (ON)",
-            "value_type": "float",
-            "default": "30.0"
-        },
-        {
-            "key": "low_threshold",
-            "label": "Low Threshold (OFF)",
-            "value_type": "float",
-            "default": "25.0"
-        }
-    ],
-    "firmware_template": {
-        "header": "#ifndef HYSTERESIS_H\n#define HYSTERESIS_H\n#include <Arduino.h>\n\nclass Hysteresis {\npublic:\n    Hysteresis(float highThreshold, float lowThreshold);\n    bool update(float value);\n    bool getState() const;\n    void setThresholds(float high, float low);\nprivate:\n    float _high, _low;\n    bool _state;\n};\n\n#endif",
-        "source": "#include \"hysteresis.h\"\n\nHysteresis::Hysteresis(float highThreshold, float lowThreshold)\n    : _high(highThreshold), _low(lowThreshold), _state(false) {}\n\nbool Hysteresis::update(float value) {\n    if (_state && value < _low) _state = false;\n    else if (!_state && value > _high) _state = true;\n    return _state;\n}\n\nbool Hysteresis::getState() const { return _state; }\n\nvoid Hysteresis::setThresholds(float high, float low) {\n    _high = high; _low = low;\n}"
-    },
-    "icon": "toggle-right",
-    "color": "#10b981"
+  "id": "hysteresis",
+  "name": "Hysteresis Controller",
+  "category": "control_blocks",
+  "description": "Hysteresis Controller firmware block",
+  "libraries": [],
+  "pins": {},
+  "bus": "",
+  "i2c_address": "",
+  "platformio_deps": [],
+  "firmware_template": {
+    "header": "#ifndef HYST_H\n#define HYST_H\nvoid hyst_setup(float low, float high);\nbool hyst_update(float value);\nbool hyst_get_state();\n#endif",
+    "source": "#include \"hysteresis.h\"\nstatic float _lo=0,_hi=0;static bool _state=false;\nvoid hyst_setup(float lo,float hi){_lo=lo;_hi=hi;_state=false;}\nbool hyst_update(float v){if(v>=_hi)_state=true;else if(v<=_lo)_state=false;return _state;}\nbool hyst_get_state(){return _state;}"
+  },
+  "configurable_params": {},
+  "outputs": {},
+  "verified": true,
+  "anti_hallucination": true
 }

@@ -108,9 +108,9 @@ export default function PromptBar({ onGraphGenerated }: Props) {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleBuild()}
-          placeholder="DESCRIBE SYSTEM ARCHITECTURE..."
+          placeholder="Describe your system architecture..."
           disabled={isBuilding}
-          className="flex-1 bg-transparent outline-none text-[11px] tracking-widest uppercase font-mono"
+          className="flex-1 bg-transparent outline-none text-sm font-medium placeholder-[var(--text-muted)]"
           style={{ color: 'var(--text-primary)' }}
         />
 
@@ -126,7 +126,7 @@ export default function PromptBar({ onGraphGenerated }: Props) {
               {PIPELINE_STAGES.map((stage, i) => (
                 <span
                   key={stage.key}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-none border text-[9px] font-bold tracking-widest uppercase transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all"
                   style={{
                     background: i <= activeStage ? 'var(--accent-subtle)' : 'transparent',
                     color: i <= activeStage ? 'var(--accent)' : 'var(--text-muted)',
@@ -145,7 +145,7 @@ export default function PromptBar({ onGraphGenerated }: Props) {
           <motion.span
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-[9px] font-bold tracking-widest uppercase px-2 py-1 rounded-none border whitespace-nowrap"
+            className="text-[10px] font-bold tracking-wider uppercase px-2 py-1 rounded-md border whitespace-nowrap shadow-sm"
             style={{
               background: result.includes('ERR') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(14, 165, 233, 0.1)',
               color: result.includes('ERR') ? 'var(--error)' : 'var(--accent)',
@@ -159,12 +159,12 @@ export default function PromptBar({ onGraphGenerated }: Props) {
         <motion.button
           onClick={handleBuild}
           disabled={isBuilding || !prompt.trim()}
-          className="flex items-center gap-2 px-4 py-1.5 rounded-none border text-[10px] font-bold tracking-widest uppercase text-black transition-all disabled:opacity-30"
-          style={{ background: 'var(--accent)', borderColor: 'var(--accent)', boxShadow: '0 0 10px var(--accent-glow)' }}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg border text-xs font-semibold text-white transition-colors disabled:opacity-50 shadow-sm"
+          style={{ background: 'var(--accent)', borderColor: 'var(--accent)' }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          {isBuilding ? <Loader2 size={12} className="animate-spin" /> : <><Sparkles size={12} /> EXECUTE</>}
+          {isBuilding ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> Execute</>}
         </motion.button>
       </div>
     </div>

@@ -170,6 +170,39 @@ def generate_block_json(block_def: dict, category: str) -> dict:
     }
 
 
+# Merge all extended/batch blocks into MASTER_BLOCKS
+def _merge_blocks(source_dict):
+    for cat, blocks in source_dict.items():
+        existing_ids = {b["id"] for b in MASTER_BLOCKS.get(cat, [])}
+        if cat not in MASTER_BLOCKS:
+            MASTER_BLOCKS[cat] = []
+        for block in blocks:
+            if block["id"] not in existing_ids:
+                MASTER_BLOCKS[cat].append(block)
+
+_BATCH_MODULES = [
+    "agents.golden_blocks_extended",
+    "agents.golden_blocks_batch2",
+    "agents.golden_blocks_batch3",
+    "agents.golden_blocks_batch4",
+    "agents.golden_blocks_batch5",
+    "agents.golden_blocks_batch6",
+    "agents.golden_blocks_batch7",
+    "agents.golden_blocks_batch8",
+]
+
+for _mod_name in _BATCH_MODULES:
+    try:
+        import importlib
+        _mod = importlib.import_module(_mod_name)
+        for _attr in dir(_mod):
+            _val = getattr(_mod, _attr)
+            if isinstance(_val, dict) and any(isinstance(v, list) for v in _val.values()):
+                _merge_blocks(_val)
+    except ImportError:
+        pass
+
+
 def write_all_blocks():
     """Write all blocks to the hardware_library directory."""
     total = 0

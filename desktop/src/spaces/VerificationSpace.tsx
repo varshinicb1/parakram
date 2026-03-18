@@ -3,7 +3,6 @@
  * Users tick features as ✅ working or ❌ broken, with AI improvement suggestions.
  */
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle, Lightbulb, ClipboardCheck, Send } from 'lucide-react';
 
 interface FeatureCheck {
@@ -72,135 +71,136 @@ export default function VerificationSpace() {
   const totalCount = features.length;
 
   return (
-    <div className="flex-1 flex flex-col gap-4 p-6 overflow-y-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ClipboardCheck size={18} style={{ color: 'var(--accent)' }} />
-          <h1 className="text-[13px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
-            VERIFICATION LAB
-          </h1>
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-4xl mx-auto px-8 py-10 flex flex-col gap-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <ClipboardCheck size={28} style={{ color: 'var(--text-primary)' }} />
+            <div>
+              <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                Hardware Verification
+              </h1>
+              <p className="text-sm font-medium mt-1" style={{ color: 'var(--text-muted)' }}>
+                Automated and manual checks for firmware capabilities.
+              </p>
+            </div>
+          </div>
+
+          {/* Score */}
+          <div className="flex items-center gap-6 bg-[var(--bg-secondary)] border rounded-xl px-5 py-3 shadow-sm" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={18} style={{ color: '#22c55e' }} />
+              <span className="text-sm font-bold" style={{ color: '#22c55e' }}>
+                {passCount} Passed
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <XCircle size={18} style={{ color: '#ef4444' }} />
+              <span className="text-sm font-bold" style={{ color: '#ef4444' }}>
+                {failCount} Failed
+              </span>
+            </div>
+            <div className="pl-6 border-l" style={{ borderColor: 'var(--border)' }}>
+              <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                {Math.round((passCount / totalCount) * 100)}%
+              </span>
+            </div>
+          </div>
         </div>
 
-        {/* Score */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={14} style={{ color: '#22c55e' }} />
-            <span className="text-[10px] tracking-widest uppercase font-bold" style={{ color: '#22c55e' }}>
-              {passCount} PASSED
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <XCircle size={14} style={{ color: '#ef4444' }} />
-            <span className="text-[10px] tracking-widest uppercase font-bold" style={{ color: '#ef4444' }}>
-              {failCount} FAILED
-            </span>
-          </div>
-          <div className="px-3 py-1 border rounded-none" style={{ borderColor: 'var(--accent)' }}>
-            <span className="text-[10px] tracking-widest uppercase font-bold" style={{ color: 'var(--accent)' }}>
-              {Math.round((passCount / totalCount) * 100)}% VERIFIED
-            </span>
-          </div>
+        {/* Progress bar */}
+        <div className="w-full h-2 rounded-full overflow-hidden bg-[var(--bg-secondary)] border shadow-inner" style={{ borderColor: 'var(--border)' }}>
+          <div className="h-full transition-all duration-500 rounded-full" style={{
+            width: `${(passCount / totalCount) * 100}%`,
+            background: '#22c55e',
+          }} />
         </div>
-      </div>
 
-      {/* Progress bar */}
-      <div className="w-full h-1 rounded-none overflow-hidden" style={{ background: 'var(--bg-tertiary)' }}>
-        <div className="h-full transition-all duration-500" style={{
-          width: `${(passCount / totalCount) * 100}%`,
-          background: 'var(--accent)',
-          boxShadow: '0 0 10px var(--accent-glow)',
-        }} />
-      </div>
+        {/* Feature checklist */}
+        <div className="flex flex-col gap-4">
+          {features.map((feature) => (
+            <div key={feature.id}
+              className="bg-[var(--bg-primary)] border rounded-xl overflow-hidden transition-shadow hover:shadow-md" style={{
+                borderColor: feature.status === 'pass' ? '#22c55e' :
+                             feature.status === 'fail' ? '#ef4444' : 'var(--border)',
+              }}>
+              <div className="p-5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>
+                    {feature.name}
+                  </h3>
+                  <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                    {feature.description}
+                  </p>
+                </div>
 
-      {/* Feature checklist */}
-      <div className="flex flex-col gap-2">
-        {features.map((feature) => (
-          <motion.div key={feature.id}
-            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-            className="border rounded-none p-4" style={{
-              borderColor: feature.status === 'pass' ? '#22c55e30' :
-                           feature.status === 'fail' ? '#ef444430' : 'var(--border)',
-              background: 'var(--bg-secondary)',
-              borderLeftWidth: '3px',
-              borderLeftColor: feature.status === 'pass' ? '#22c55e' :
-                              feature.status === 'fail' ? '#ef4444' : 'var(--border)',
-            }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-[11px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {feature.name}
-                </h3>
-                <p className="text-[9px] tracking-wider uppercase mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  {feature.description}
-                </p>
+                <div className="flex items-center gap-3 shrink-0 ml-4">
+                  <button onClick={() => toggleStatus(feature.id, 'pass')}
+                    className="p-2.5 rounded-lg border transition-all hover:scale-105"
+                    style={{
+                      borderColor: feature.status === 'pass' ? '#22c55e' : 'var(--border)',
+                      background: feature.status === 'pass' ? '#22c55e15' : 'var(--bg-secondary)',
+                      color: feature.status === 'pass' ? '#22c55e' : 'var(--text-muted)',
+                    }}>
+                    <CheckCircle2 size={20} />
+                  </button>
+                  <button onClick={() => toggleStatus(feature.id, 'fail')}
+                    className="p-2.5 rounded-lg border transition-all hover:scale-105"
+                    style={{
+                      borderColor: feature.status === 'fail' ? '#ef4444' : 'var(--border)',
+                      background: feature.status === 'fail' ? '#ef444415' : 'var(--bg-secondary)',
+                      color: feature.status === 'fail' ? '#ef4444' : 'var(--text-muted)',
+                    }}>
+                    <XCircle size={20} />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <motion.button onClick={() => toggleStatus(feature.id, 'pass')}
-                  whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                  className="p-2 rounded-none border transition-all"
-                  style={{
-                    borderColor: feature.status === 'pass' ? '#22c55e' : 'var(--border)',
-                    background: feature.status === 'pass' ? '#22c55e20' : 'transparent',
-                    color: feature.status === 'pass' ? '#22c55e' : 'var(--text-muted)',
-                  }}>
-                  <CheckCircle2 size={16} />
-                </motion.button>
-                <motion.button onClick={() => toggleStatus(feature.id, 'fail')}
-                  whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                  className="p-2 rounded-none border transition-all"
-                  style={{
-                    borderColor: feature.status === 'fail' ? '#ef4444' : 'var(--border)',
-                    background: feature.status === 'fail' ? '#ef444420' : 'transparent',
-                    color: feature.status === 'fail' ? '#ef4444' : 'var(--text-muted)',
-                  }}>
-                  <XCircle size={16} />
-                </motion.button>
+              {/* Extras (Suggestion & Note) */}
+              <div className="px-5 pb-5">
+                {/* AI Suggestion for failed features */}
+                {feature.status === 'fail' && feature.suggestion && (
+                  <div className="mt-2 p-4 border rounded-xl" style={{ borderColor: '#d9770640', background: '#d9770608' }}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lightbulb size={16} style={{ color: '#d97706' }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#d97706' }}>
+                        AI Suggestion
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {feature.suggestion}
+                    </p>
+                  </div>
+                )}
+
+                {/* User note input for failed features */}
+                {feature.status === 'fail' && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      value={noteInput[feature.id] || ''}
+                      onChange={(e) => setNoteInput(prev => ({ ...prev, [feature.id]: e.target.value }))}
+                      placeholder="Add an observation note or troubleshooting step..."
+                      className="flex-1 bg-[var(--bg-secondary)] border rounded-lg px-4 py-2.5 text-sm font-medium outline-none focus:border-[var(--text-primary)] transition-colors shadow-sm"
+                      style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    />
+                    <button onClick={() => addNote(feature.id)}
+                      className="p-3 bg-[var(--text-primary)] rounded-lg text-white transition-transform hover:scale-105" style={{ color: 'var(--bg-primary)' }}>
+                      <Send size={16} />
+                    </button>
+                  </div>
+                )}
+
+                {feature.userNote && (
+                  <div className="mt-3 text-sm font-medium px-4 py-3 border rounded-xl bg-[var(--bg-secondary)]"
+                    style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                    <strong>Note:</strong> {feature.userNote}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* AI Suggestion for failed features */}
-            {feature.status === 'fail' && feature.suggestion && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                className="mt-3 p-3 border rounded-none" style={{ borderColor: '#d9770630', background: '#d9770608' }}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Lightbulb size={12} style={{ color: '#d97706' }} />
-                  <span className="text-[8px] tracking-widest uppercase font-bold" style={{ color: '#d97706' }}>
-                    AI IMPROVEMENT SUGGESTION
-                  </span>
-                </div>
-                <p className="text-[9px] font-mono uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
-                  {feature.suggestion}
-                </p>
-              </motion.div>
-            )}
-
-            {/* User note input for failed features */}
-            {feature.status === 'fail' && (
-              <div className="mt-2 flex items-center gap-2">
-                <input
-                  value={noteInput[feature.id] || ''}
-                  onChange={(e) => setNoteInput(prev => ({ ...prev, [feature.id]: e.target.value }))}
-                  placeholder="ADD OBSERVATION NOTE..."
-                  className="flex-1 bg-transparent border rounded-none px-2 py-1 text-[9px] tracking-widest uppercase font-mono outline-none"
-                  style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                />
-                <button onClick={() => addNote(feature.id)}
-                  className="p-1 rounded-none border" style={{ borderColor: 'var(--border)', color: 'var(--accent)' }}>
-                  <Send size={10} />
-                </button>
-              </div>
-            )}
-
-            {feature.userNote && (
-              <div className="mt-2 text-[8px] tracking-wider uppercase font-mono px-2 py-1 border-l-2"
-                style={{ borderLeftColor: 'var(--accent)', color: 'var(--text-muted)' }}>
-                NOTE: {feature.userNote}
-              </div>
-            )}
-          </motion.div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

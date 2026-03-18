@@ -2,12 +2,13 @@
  * WorkspaceSpace — VS Code-style code editor with file tree, project creation,
  * MISRA compliance analysis, and intelligent code editing.
  */
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState } from 'react';
 import {
   Folder, ChevronRight, ChevronDown, Save,
   AlertTriangle, CheckCircle, FileCode, FolderPlus, Shield
 } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../lib/db';
 
 interface FileNode {
   name: string;
@@ -18,12 +19,6 @@ interface FileNode {
   children?: FileNode[];
 }
 
-interface Project {
-  name: string;
-  path: string;
-  has_platformio: boolean;
-  file_count: number;
-}
 
 interface MISRAViolation {
   rule: string;
@@ -37,7 +32,8 @@ const API = 'http://localhost:8000/api/workspace';
 const ANALYSIS_API = 'http://localhost:8000/api/analysis';
 
 export default function WorkspaceSpace() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const dbProjects = useLiveQuery(() => db.projects.orderBy('createdAt').reverse().toArray(), []);
+  
   const [activeProject, setActiveProject] = useState<string | null>(null);
   const [fileTree, setFileTree] = useState<FileNode[]>([]);
   const [activeFile, setActiveFile] = useState<string | null>(null);
@@ -48,10 +44,6 @@ export default function WorkspaceSpace() {
   const [newProjectName, setNewProjectName] = useState('');
   const [showNewProject, setShowNewProject] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    fetch(`${API}/projects`).then(r => r.json()).then(d => setProjects(d.projects || [])).catch(() => {});
-  }, []);
 
   const loadProject = async (name: string) => {
     setActiveProject(name);
@@ -104,16 +96,25 @@ export default function WorkspaceSpace() {
   const createProject = async (template: string) => {
     if (!newProjectName.trim()) return;
     try {
+      // 1. Tell backend to create physical files
       await fetch(`${API}/projects/create`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newProjectName.trim(), template }),
       });
+      
+      // 2. Save metadata to local Dexie DB
+      await db.projects.add({
+        id: crypto.randomUUID(),
+        name: newProjectName.trim(),
+        description: `Created from ${template} template`,
+        board: 'Generic ESP32',
+        createdAt: new Date().toISOString(),
+        blocks: [],
+      });
+
       setShowNewProject(false);
       setNewProjectName('');
-      const res = await fetch(`${API}/projects`);
-      const data = await res.json();
-      setProjects(data.projects || []);
-    } catch { /* ignore */ }
+    } catch (e) { console.error("Failed to create project", e); }
   };
 
   const FileTreeNode = ({ node, depth = 0 }: { node: FileNode; depth?: number }) => {
@@ -125,13 +126,14 @@ export default function WorkspaceSpace() {
       <div>
         <button
           onClick={() => node.type === 'directory' ? setExpanded(!expanded) : openFile(node.path)}
-          className="w-full flex items-center gap-1.5 px-2 py-1 text-left text-[9px] tracking-wider font-mono transition-all hover:brightness-125"
+          className="w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition-colors hover:bg-[var(--bg-tertiary)]"
           style={{
-            paddingLeft: `${8 + depth * 14}px`,
-            background: isActive ? 'var(--accent-subtle)' : 'transparent',
-            color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+            paddingLeft: `${12 + depth * 16}px`,
+            background: isActive ? 'var(--bg-tertiary)' : 'transparent',
+            color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+            borderLeft: isActive ? '2px solid var(--accent)' : '2px solid transparent'
           }}>
-          <Icon size={11} />
+          <Icon size={14} style={{ color: node.type === 'directory' ? 'var(--text-muted)' : 'var(--text-secondary)' }} />
           <span className="truncate">{node.name}</span>
         </button>
         {expanded && node.children?.map(child => (
@@ -142,52 +144,57 @@ export default function WorkspaceSpace() {
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden animate-fade-in">
+    <div className="flex-1 flex overflow-hidden">
       {/* Left: Project Explorer */}
-      <div className="w-56 border-r flex flex-col shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-        <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
-          <span className="text-[8px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-muted)' }}>EXPLORER</span>
-          <button onClick={() => setShowNewProject(!showNewProject)} className="p-1 transition-all hover:scale-110" style={{ color: 'var(--accent)' }}>
-            <FolderPlus size={13} />
+      <div className="w-64 border-r flex flex-col shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
+          <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>Explorer</span>
+          <button onClick={() => setShowNewProject(!showNewProject)} className="p-1 rounded-md transition-colors hover:bg-[var(--bg-tertiary)]" style={{ color: 'var(--text-secondary)' }}>
+            <FolderPlus size={16} />
           </button>
         </div>
 
         {showNewProject && (
-          <div className="p-2 border-b space-y-2" style={{ borderColor: 'var(--border)' }}>
+          <div className="p-3 border-b space-y-3 bg-[var(--bg-tertiary)]" style={{ borderColor: 'var(--border)' }}>
             <input value={newProjectName} onChange={e => setNewProjectName(e.target.value)}
-              placeholder="Project name..." className="w-full bg-transparent border rounded-none px-2 py-1 text-[9px] font-mono outline-none"
+              placeholder="Project name..." className="w-full bg-[var(--bg-primary)] border rounded-md px-3 py-1.5 text-sm outline-none placeholder:text-[var(--text-muted)]"
               style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }} />
-            <div className="grid grid-cols-2 gap-1">
+            <div className="grid grid-cols-2 gap-2">
               {['blank', 'blink', 'sensor', 'iot'].map(t => (
                 <button key={t} onClick={() => createProject(t)}
-                  className="text-[7px] tracking-widest uppercase font-bold px-2 py-1 border rounded-none transition-all hover:brightness-125"
-                  style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>{t}</button>
+                  className="text-xs font-medium px-2 py-1.5 border rounded-lg transition-colors hover:bg-[var(--bg-secondary)]"
+                  style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                  <span className="capitalize">{t}</span>
+                </button>
               ))}
             </div>
           </div>
         )}
 
         {/* Projects list */}
-        <div className="flex-1 overflow-y-auto">
-          {projects.length === 0 ? (
-            <div className="text-center py-8 text-[8px] tracking-widest" style={{ color: 'var(--text-muted)' }}>
-              NO PROJECTS<br /><span className="text-[7px]">Create one with + above</span>
+        <div className="flex-1 overflow-y-auto py-2">
+          {!dbProjects || dbProjects.length === 0 ? (
+            <div className="text-center py-10 px-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+               No local projects found.<br /><span className="text-xs mt-2 inline-block">Click the + icon to create one.</span>
             </div>
           ) : (
-            projects.map(p => (
-              <div key={p.name}>
+            dbProjects.map(p => (
+              <div key={p.id}>
                 <button onClick={() => loadProject(p.name)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-[9px] tracking-wider font-bold transition-all hover:brightness-125"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-colors hover:bg-[var(--bg-tertiary)]"
                   style={{
-                    background: activeProject === p.name ? 'var(--accent-subtle)' : 'transparent',
-                    color: activeProject === p.name ? 'var(--accent)' : 'var(--text-primary)',
+                    background: activeProject === p.name ? 'var(--bg-tertiary)' : 'transparent',
+                    color: activeProject === p.name ? 'var(--text-primary)' : 'var(--text-secondary)',
                   }}>
-                  <Folder size={12} /> {p.name}
-                  <span className="ml-auto text-[7px]" style={{ color: 'var(--text-muted)' }}>{p.file_count}f</span>
+                  <Folder size={14} style={{ color: 'var(--text-muted)' }} /> {p.name}
                 </button>
-                {activeProject === p.name && fileTree.map(node => (
-                  <FileTreeNode key={node.path} node={node} />
-                ))}
+                {activeProject === p.name && (
+                  <div className="py-1">
+                    {fileTree.map(node => (
+                      <FileTreeNode key={node.path} node={node} />
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           )}
@@ -197,26 +204,24 @@ export default function WorkspaceSpace() {
       {/* Center: Code Editor */}
       <div className="flex-1 flex flex-col min-w-0">
         {activeFile && (
-          <div className="flex items-center justify-between px-3 py-1.5 border-b" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+          <div className="flex items-center justify-between px-4 py-2 border-b bg-[var(--bg-secondary)]" style={{ borderColor: 'var(--border)' }}>
             <div className="flex items-center gap-2">
-              <FileCode size={11} style={{ color: 'var(--accent)' }} />
-              <span className="text-[9px] tracking-wider font-mono" style={{ color: 'var(--text-primary)' }}>
-                {activeFile} {modified && <span style={{ color: '#f59e0b' }}>●</span>}
+              <FileCode size={14} style={{ color: 'var(--text-secondary)' }} />
+              <span className="text-sm font-mono font-medium" style={{ color: 'var(--text-primary)' }}>
+                {activeFile} {modified && <span style={{ color: 'var(--warning)' }}>●</span>}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <motion.button onClick={saveFile} disabled={saving || !modified}
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1 px-2 py-1 text-[7px] tracking-widest uppercase font-bold border rounded-none disabled:opacity-30"
-                style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
-                <Save size={10} /> {saving ? 'SAVING...' : 'SAVE'}
-              </motion.button>
-              <motion.button onClick={runMISRA}
-                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                className="flex items-center gap-1 px-2 py-1 text-[7px] tracking-widest uppercase font-bold border rounded-none"
-                style={{ borderColor: '#8b5cf6', color: '#8b5cf6' }}>
-                <Shield size={10} /> MISRA CHECK
-              </motion.button>
+            <div className="flex items-center gap-3">
+              <button onClick={saveFile} disabled={saving || !modified}
+                className="flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 shadow-sm"
+                style={{ background: modified ? 'var(--text-primary)' : 'var(--bg-tertiary)', color: modified ? 'var(--bg-primary)' : 'var(--text-muted)' }}>
+                <Save size={14} /> {saving ? 'Saving...' : 'Save File'}
+              </button>
+              <button onClick={runMISRA}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold border rounded-lg transition-colors hover:bg-[var(--bg-tertiary)] shadow-sm"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>
+                <Shield size={14} /> MISRA Analysis
+              </button>
             </div>
           </div>
         )}
@@ -224,27 +229,27 @@ export default function WorkspaceSpace() {
         {activeFile ? (
           <textarea value={fileContent}
             onChange={e => { setFileContent(e.target.value); setModified(true); }}
-            className="flex-1 resize-none p-4 font-mono text-[11px] leading-relaxed outline-none"
-            style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+            className="flex-1 resize-none p-6 font-mono text-sm leading-relaxed outline-none"
+            style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)' }}
             spellCheck={false}
           />
         ) : (
-          <div className="flex-1 flex items-center justify-center flex-col gap-3">
-            <FileCode size={40} style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
-            <p className="text-[9px] tracking-widest uppercase" style={{ color: 'var(--text-muted)' }}>SELECT A FILE TO EDIT</p>
+          <div className="flex-1 flex items-center justify-center flex-col gap-4">
+            <FileCode size={48} style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
+            <p className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>Select a file to edit</p>
           </div>
         )}
       </div>
 
       {/* Right: MISRA Compliance Panel */}
       {violations.length > 0 && (
-        <div className="w-72 border-l overflow-y-auto shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
-          <div className="p-3 border-b space-y-2" style={{ borderColor: 'var(--border)' }}>
+        <div className="w-80 border-l overflow-y-auto shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}>
+          <div className="p-4 border-b space-y-3 bg-[var(--bg-tertiary)]" style={{ borderColor: 'var(--border)' }}>
             <div className="flex items-center justify-between">
-              <span className="text-[8px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-muted)' }}>MISRA COMPLIANCE</span>
+              <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>MISRA Compliance</span>
               {compliance && (
-                <span className="text-lg font-black"
-                  style={{ color: compliance.score >= 75 ? '#22c55e' : compliance.score >= 50 ? '#f59e0b' : '#ef4444' }}>
+                <span className="text-xl font-bold"
+                  style={{ color: compliance.score >= 75 ? 'var(--success)' : compliance.score >= 50 ? 'var(--warning)' : 'var(--error)' }}>
                   {compliance.grade}
                 </span>
               )}
@@ -253,26 +258,31 @@ export default function WorkspaceSpace() {
               <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
                 <div className="h-full rounded-full transition-all" style={{
                   width: `${compliance.score}%`,
-                  background: compliance.score >= 75 ? '#22c55e' : compliance.score >= 50 ? '#f59e0b' : '#ef4444',
+                  background: compliance.score >= 75 ? 'var(--success)' : compliance.score >= 50 ? 'var(--warning)' : 'var(--error)',
                 }} />
               </div>
             )}
           </div>
-          {violations.map((v, i) => (
-            <div key={i} className="px-3 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                {v.severity === 'error' ? <AlertTriangle size={10} style={{ color: '#ef4444' }} /> :
-                 v.severity === 'warning' ? <AlertTriangle size={10} style={{ color: '#f59e0b' }} /> :
-                 <CheckCircle size={10} style={{ color: '#3b82f6' }} />}
-                <span className="text-[7px] tracking-widest uppercase font-bold"
-                  style={{ color: v.severity === 'error' ? '#ef4444' : v.severity === 'warning' ? '#f59e0b' : '#3b82f6' }}>
-                  Rule {v.rule} · Line {v.line}
-                </span>
+          <div className="p-2">
+            {violations.map((v, i) => (
+              <div key={i} className="px-3 py-3 border-b border-transparent hover:bg-[var(--bg-tertiary)] hover:border-[var(--border)] rounded-md transition-colors">
+                <div className="flex items-center gap-2 mb-1.5">
+                  {v.severity === 'error' ? <AlertTriangle size={14} style={{ color: 'var(--error)' }} /> :
+                   v.severity === 'warning' ? <AlertTriangle size={14} style={{ color: 'var(--warning)' }} /> :
+                   <CheckCircle size={14} style={{ color: 'var(--accent)' }} />}
+                  <span className="text-xs font-bold"
+                    style={{ color: v.severity === 'error' ? 'var(--error)' : v.severity === 'warning' ? 'var(--warning)' : 'var(--accent)' }}>
+                    Rule {v.rule} · Line {v.line}
+                  </span>
+                </div>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-primary)' }}>{v.message}</p>
+                <div className="mt-2 text-xs p-2 rounded-lg bg-[var(--bg-primary)] border" style={{ color: 'var(--text-secondary)', borderColor: 'var(--border)' }}>
+                  <span className="font-semibold text-xs mb-1 block" style={{ color: 'var(--text-muted)' }}>Suggestion</span>
+                  {v.suggestion}
+                </div>
               </div>
-              <p className="text-[8px] tracking-wider" style={{ color: 'var(--text-primary)' }}>{v.message}</p>
-              <p className="text-[7px] tracking-wider mt-0.5" style={{ color: 'var(--text-muted)' }}>💡 {v.suggestion}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

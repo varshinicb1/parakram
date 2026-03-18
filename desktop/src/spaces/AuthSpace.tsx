@@ -86,49 +86,52 @@ export default function AuthSpace() {
   const switchView = (v: AuthView) => { setView(v); setError(''); setSuccess(''); };
 
   return (
-    <div className="flex-1 flex items-center justify-center animate-fade-in">
+    <div className="flex-1 flex items-center justify-center bg-[var(--bg-primary)] p-6">
       <motion.div
-        className="w-full max-w-md border rounded-none p-8"
-        style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border)' }}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md bg-[var(--bg-secondary)] border rounded-2xl p-8 shadow-sm"
+        style={{ borderColor: 'var(--border)' }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <Hexagon size={32} className="mx-auto mb-3" style={{ color: 'var(--accent)' }} />
-          <h1 className="text-xl font-bold tracking-widest uppercase" style={{ color: 'var(--text-primary)' }}>
-            {view === 'login' ? 'AUTHENTICATE' : view === 'signup' ? 'CREATE ACCOUNT' : 'RESET ACCESS'}
+          <div className="w-16 h-16 mx-auto mb-4 bg-[var(--bg-primary)] border rounded-2xl flex items-center justify-center shadow-sm" style={{ borderColor: 'var(--border)' }}>
+            <Hexagon size={32} style={{ color: 'var(--text-primary)' }} />
+          </div>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            {view === 'login' ? 'Welcome Back' : view === 'signup' ? 'Create Account' : 'Reset Password'}
           </h1>
-          <p className="text-[9px] tracking-widest uppercase mt-1" style={{ color: 'var(--text-muted)' }}>
-            {view === 'login' ? 'ENTER CREDENTIALS TO ACCESS COMMAND CENTER' :
-             view === 'signup' ? 'REGISTER A NEW OPERATOR ACCOUNT' :
-             'RECOVER YOUR ACCESS CREDENTIALS'}
+          <p className="text-sm mt-2" style={{ color: 'var(--text-muted)' }}>
+            {view === 'login' ? 'Enter your credentials to access the command center.' :
+             view === 'signup' ? 'Register a new operator account.' :
+             'Recover your access credentials.'}
           </p>
         </div>
 
         {/* View tabs */}
-        <div className="flex gap-1 mb-6 border-b" style={{ borderColor: 'var(--border)' }}>
-          {([['login', 'LOGIN', LogIn], ['signup', 'REGISTER', UserPlus], ['reset', 'RESET', KeyRound]] as const).map(([id, label, Icon]) => (
+        <div className="flex gap-2 mb-8 border-b" style={{ borderColor: 'var(--border)' }}>
+          {([['login', 'Login', LogIn], ['signup', 'Register', UserPlus], ['reset', 'Reset', KeyRound]] as const).map(([id, label, Icon]) => (
             <button key={id} onClick={() => switchView(id)}
-              className="flex items-center gap-1.5 px-3 py-2 text-[8px] tracking-widest uppercase font-bold border-b-2 transition-all"
+              className="flex items-center justify-center gap-2 flex-1 py-3 text-sm font-semibold border-b-2 transition-colors hover:bg-[var(--bg-primary)] rounded-t-lg"
               style={{
-                borderBottomColor: view === id ? 'var(--accent)' : 'transparent',
-                color: view === id ? 'var(--accent)' : 'var(--text-muted)',
+                borderBottomColor: view === id ? 'var(--text-primary)' : 'transparent',
+                color: view === id ? 'var(--text-primary)' : 'var(--text-muted)',
               }}>
-              <Icon size={11} /> {label}
+              <Icon size={16} /> {label}
             </button>
           ))}
         </div>
 
         {/* Form */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           {/* Email */}
           <div className="relative">
-            <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
             <input
               type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="OPERATOR EMAIL"
-              className="w-full bg-transparent border rounded-none pl-9 pr-3 py-2.5 text-[10px] tracking-widest uppercase font-mono outline-none focus:border-[var(--accent)] transition-colors"
+              placeholder="Email address"
+              className="w-full bg-[var(--bg-primary)] border rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none focus:border-[var(--text-primary)] transition-colors shadow-sm"
               style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
             />
           </div>
@@ -136,16 +139,16 @@ export default function AuthSpace() {
           {/* Password */}
           {view !== 'reset' && (
             <div className="relative">
-              <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input
                 type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="ACCESS KEY"
-                className="w-full bg-transparent border rounded-none pl-9 pr-9 py-2.5 text-[10px] tracking-widest uppercase font-mono outline-none focus:border-[var(--accent)] transition-colors"
+                placeholder="Password"
+                className="w-full bg-[var(--bg-primary)] border rounded-xl pl-11 pr-12 py-3 text-sm font-medium outline-none focus:border-[var(--text-primary)] transition-colors shadow-sm"
                 style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
               />
-              <button onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2"
+              <button onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-[var(--bg-secondary)] rounded-md transition-colors"
                 style={{ color: 'var(--text-muted)' }}>
-                {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           )}
@@ -153,11 +156,11 @@ export default function AuthSpace() {
           {/* Confirm Password */}
           {view === 'signup' && (
             <div className="relative">
-              <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
               <input
                 type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="CONFIRM ACCESS KEY"
-                className="w-full bg-transparent border rounded-none pl-9 pr-3 py-2.5 text-[10px] tracking-widest uppercase font-mono outline-none focus:border-[var(--accent)] transition-colors"
+                placeholder="Confirm Password"
+                className="w-full bg-[var(--bg-primary)] border rounded-xl pl-11 pr-4 py-3 text-sm font-medium outline-none focus:border-[var(--text-primary)] transition-colors shadow-sm"
                 style={{ borderColor: 'var(--border)', color: 'var(--text-primary)' }}
               />
             </div>
@@ -166,34 +169,32 @@ export default function AuthSpace() {
           {/* Error / Success */}
           <AnimatePresence>
             {error && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-3 py-2 border rounded-none text-[8px] tracking-widest uppercase font-bold"
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-2 px-4 py-3 border rounded-xl text-sm font-medium overflow-hidden"
                 style={{ borderColor: '#ef444440', color: '#ef4444', background: '#ef444410' }}>
-                <AlertCircle size={11} /> {error}
+                <AlertCircle size={16} className="shrink-0" /> <span className="truncate">{error}</span>
               </motion.div>
             )}
             {success && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-3 py-2 border rounded-none text-[8px] tracking-widest uppercase font-bold"
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-2 px-4 py-3 border rounded-xl text-sm font-medium overflow-hidden"
                 style={{ borderColor: '#22c55e40', color: '#22c55e', background: '#22c55e10' }}>
-                <Check size={11} /> {success}
+                <Check size={16} className="shrink-0" /> <span className="truncate">{success}</span>
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Submit */}
-          <motion.button
+          <button
             onClick={view === 'login' ? handleLogin : view === 'signup' ? handleSignup : handleReset}
             disabled={loading}
-            className="flex items-center justify-center gap-2 py-2.5 rounded-none text-[10px] tracking-widest uppercase font-bold text-black disabled:opacity-40 transition-all"
-            style={{ background: 'var(--accent)', boxShadow: '0 0 15px var(--accent-glow)' }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            className="mt-2 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold disabled:opacity-50 transition-colors shadow-sm"
+            style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
           >
-            {loading ? 'PROCESSING...' : (
-              <>{view === 'login' ? 'AUTHENTICATE' : view === 'signup' ? 'CREATE ACCOUNT' : 'SEND RESET LINK'} <ArrowRight size={12} /></>
+            {loading ? 'Processing...' : (
+              <>{view === 'login' ? 'Sign In' : view === 'signup' ? 'Create Account' : 'Send Reset Link'} <ArrowRight size={16} /></>
             )}
-          </motion.button>
+          </button>
         </div>
       </motion.div>
     </div>

@@ -44,3 +44,20 @@ projects/*/logs/*.log
 
 # Parakram internal
 .parakram/
+
+# Desktop build output
+desktop/dist/
+desktop/src-tauri/target/
+desktop/src-tauri/binaries/
+
+# Rust
+target/
+
+# Sidecar
+*.spec
+
+# Logs
+*.log
+
+# OTA temp files
+backend/ota_updates/

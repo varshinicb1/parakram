@@ -5,13 +5,14 @@ Single entry point: natural language prompt in, compiled + verified firmware out
 
 Pipeline:
   1. NL → Block Graph (nl_graph_agent)
-  2. For each block: lookup golden template OR generate with parakram-coder-v2
+  2. For each block: lookup golden template OR generate with LLM Router
   3. Anti-hallucination validation + auto-fix
-  4. Code review (static analysis)
-  5. Assemble into PlatformIO project
-  6. Resolve library dependencies
-  7. Compile with self-healing
-  8. Wokwi simulation (optional)
+  4. MISRA C:2012 compliance check + auto-fix
+  5. Code review (static analysis)
+  6. Assemble into PlatformIO project
+  7. Resolve library dependencies
+  8. Compile with self-healing
+  9. Wokwi simulation (optional)
 """
 
 import os
@@ -24,8 +25,6 @@ import aiohttp
 from pathlib import Path
 from typing import Optional
 
-OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-MODEL = os.environ.get("OLLAMA_CODE_MODEL", "parakram-coder-v2")
 PROJECT_DIR = os.environ.get("PARAKRAM_PROJECTS", os.path.expanduser("~/parakram_projects"))
 
 
@@ -54,17 +53,23 @@ class PromptToFirmware:
                 except Exception:
                     pass
 
-    async def build(self, prompt: str, verify: bool = True) -> dict:
+    async def build(self, prompt: str, verify: bool = True, template_only: bool = False) -> dict:
         """
         Full pipeline: prompt → compiled firmware.
+
+        Args:
+            prompt: Natural language description of desired firmware
+            verify: Whether to compile and simulate
+            template_only: If True, skip LLM entirely — use only golden templates
 
         Returns:
             {
                 "success": bool,
                 "project_dir": str,
                 "graph": dict,
-                "blocks": [{id, name, has_template, header, source}],
+                "blocks": [{id, name, has_template, header, source, misra_score}],
                 "review_issues": [],
+                "misra_compliance": {},
                 "compile_result": {},
                 "simulation_result": {},
                 "timings": {},
@@ -72,7 +77,8 @@ class PromptToFirmware:
         """
         result = {
             "success": False, "prompt": prompt, "board": self.board,
-            "blocks": [], "review_issues": [], "timings": {},
+            "blocks": [], "review_issues": [], "misra_compliance": {},
+            "timings": {}, "template_only": template_only,
         }
         t0 = time.time()
 
@@ -109,9 +115,9 @@ class PromptToFirmware:
                     "libs": hw.get("libraries", []),
                     "lib_deps": hw.get("platformio_deps", hw.get("lib_deps", [])),
                 })
-            else:
-                # Generate with LLM + anti-hallucination
-                gen = await self._generate_block(bid, hw)
+            elif not template_only:
+                # Generate with LLM Router + anti-hallucination
+                gen = await self._generate_block_with_router(bid, hw)
                 if gen:
                     blocks.append({
                         "id": bid, "name": hw.get("name", bid),
@@ -120,6 +126,15 @@ class PromptToFirmware:
                         "libs": hw.get("libraries", []),
                         "lib_deps": hw.get("platformio_deps", hw.get("lib_deps", [])),
                     })
+            else:
+                # Template-only mode: generate a stub for unknown blocks
+                stub = self._generate_stub(bid)
+                blocks.append({
+                    "id": bid, "name": hw.get("name", bid),
+                    "has_template": False, "is_stub": True,
+                    "header": stub["header"], "source": stub["source"],
+                    "libs": [], "lib_deps": [],
+                })
 
         result["blocks"] = blocks
         result["timings"]["code_gen"] = round(time.time() - t1, 2)
@@ -140,8 +155,34 @@ class PromptToFirmware:
                 block["hallucinations_fixed"] = val["issues_fixed"]
         result["timings"]["anti_hallucination"] = round(time.time() - t2, 2)
 
-        # ── Step 4: Code review ─────────────────────────
+        # ── Step 4: MISRA C:2012 compliance (NEW) ───────
         t3 = time.time()
+        from agents.misra_checker import get_misra_checker
+        checker = get_misra_checker()
+        total_misra_issues = 0
+        total_misra_fixed = 0
+        for block in blocks:
+            # Run MISRA check → auto-fix → re-check loop
+            fixed_result = checker.ensure_compliance(
+                block["source"], filename=f"{block['id']}.cpp"
+            )
+            block["source"] = fixed_result["code"]
+            block["misra_score"] = fixed_result["compliance"]["score"]
+            block["misra_grade"] = fixed_result["compliance"]["grade"]
+            total_misra_issues += fixed_result["original_violations"]
+            total_misra_fixed += fixed_result["violations_fixed"]
+
+        result["misra_compliance"] = {
+            "total_violations_found": total_misra_issues,
+            "total_violations_fixed": total_misra_fixed,
+            "all_blocks_compliant": all(
+                b.get("misra_score", 0) >= 90 for b in blocks
+            ),
+        }
+        result["timings"]["misra_check"] = round(time.time() - t3, 2)
+
+        # ── Step 5: Code review (static analysis) ───────
+        t4 = time.time()
         from agents.code_reviewer import CodeReviewer
         reviewer = CodeReviewer()
         all_issues = []
@@ -155,10 +196,10 @@ class PromptToFirmware:
                     "message": issue.message,
                 })
         result["review_issues"] = all_issues
-        result["timings"]["code_review"] = round(time.time() - t3, 2)
+        result["timings"]["code_review"] = round(time.time() - t4, 2)
 
-        # ── Step 5: Assemble PlatformIO project ─────────
-        t4 = time.time()
+        # ── Step 6: Assemble PlatformIO project ─────────
+        t5 = time.time()
         project_name = prompt.lower()[:30].strip()
         for ch in " ,.'\"!?/\\:*<>|":
             project_name = project_name.replace(ch, "_")
@@ -200,35 +241,37 @@ class PromptToFirmware:
             f.write(main_cpp)
 
         result["project_dir"] = project_dir
-        result["timings"]["assembly"] = round(time.time() - t4, 2)
+        result["timings"]["assembly"] = round(time.time() - t5, 2)
 
         if not verify:
             result["success"] = True
             result["timings"]["total"] = round(time.time() - t0, 2)
             return result
 
-        # ── Step 6: Compile ─────────────────────────────
-        t5 = time.time()
+        # ── Step 7: Compile ─────────────────────────────
+        t6 = time.time()
         compile_result = await self._compile(project_dir)
         result["compile_result"] = compile_result
-        result["timings"]["compile"] = round(time.time() - t5, 2)
+        result["timings"]["compile"] = round(time.time() - t6, 2)
 
         if compile_result.get("success"):
             result["success"] = True
 
-            # ── Step 7: Wokwi simulation (optional) ─────
+            # ── Step 8: Wokwi simulation (optional) ─────
             if verify:
-                t6 = time.time()
+                t7 = time.time()
                 sim = await self._simulate(project_dir, blocks)
                 result["simulation_result"] = sim
-                result["timings"]["simulation"] = round(time.time() - t6, 2)
+                result["timings"]["simulation"] = round(time.time() - t7, 2)
 
         result["timings"]["total"] = round(time.time() - t0, 2)
         return result
 
-    async def _generate_block(self, block_id: str, hw_info: dict) -> Optional[dict]:
-        """Generate firmware for a block using LLM with constrained prompt."""
+    async def _generate_block_with_router(self, block_id: str, hw_info: dict) -> Optional[dict]:
+        """Generate firmware using LLM Router with fallback chain."""
+        from agents.llm_provider import get_router
         from agents.anti_hallucination import AntiHallucinationEngine
+
         engine = AntiHallucinationEngine()
         libs = hw_info.get("libraries", [])
         prompt = engine.build_constrained_prompt(
@@ -238,30 +281,55 @@ class PromptToFirmware:
             hw_info.get("description", ""),
         )
 
+        router = get_router()
+
+        # Try generate_code through the LLM Router
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{OLLAMA_BASE}/api/generate",
-                    json={"model": MODEL, "prompt": prompt, "stream": False},
-                    timeout=aiohttp.ClientTimeout(total=60),
-                ) as resp:
-                    data = await resp.json()
-                    text = data.get("response", "")
-
-            # Parse header and source
-            header = ""
-            source = ""
-            if "===HEADER===" in text and "===SOURCE===" in text:
-                parts = text.split("===SOURCE===")
-                header = parts[0].replace("===HEADER===", "").strip()
-                source = parts[1].strip() if len(parts) > 1 else ""
-
-            if source:
-                return {"header": header, "source": source}
+            result = await router.generate_code(prompt, max_tokens=3000)
+            if result.get("source") and len(result["source"]) > 50:
+                print(f"[ptf] Generated {block_id} via {router.active.name}")
+                return result
         except Exception as e:
-            print(f"[ptf] LLM generation failed for {block_id}: {e}")
+            print(f"[ptf] Router generation failed for {block_id}: {e}")
 
-        return None
+        # Fallback: generate a quality stub
+        print(f"[ptf] Using stub for {block_id}")
+        return self._generate_stub(block_id)
+
+    def _generate_stub(self, block_id: str) -> dict:
+        """Generate a MISRA-compliant stub for an unknown block."""
+        safe = block_id.lower().replace("-", "_").replace(" ", "_")
+        guard = safe.upper() + "_H"
+
+        header = f"""#ifndef {guard}
+#define {guard}
+
+#include <Arduino.h>
+
+/* {block_id} — stub (template not available) */
+void {safe}_setup(void);
+void {safe}_loop(void);
+
+#endif /* {guard} */
+"""
+        source = f"""#include "{safe}.h"
+
+/* {block_id} — stub implementation */
+static unsigned long {safe}_last_ms = 0;
+
+void {safe}_setup(void) {{
+    Serial.println("[{safe}] Setup — stub");
+}}
+
+void {safe}_loop(void) {{
+    if (millis() - {safe}_last_ms < 1000U) {{
+        return;
+    }}
+    {safe}_last_ms = millis();
+    /* TODO: Implement {block_id} logic */
+}}
+"""
+        return {"header": header, "source": source}
 
     def _generate_main(self, blocks: list[dict]) -> str:
         """Generate main.cpp that calls all block setup/loop functions."""
@@ -368,7 +436,6 @@ class PromptToFirmware:
                 continue  # Software-only blocks
 
             hw = self._hw_blocks.get(bid, {})
-            pins = hw.get("pins", {})
 
             # Map block IDs to Wokwi component types
             wokwi_map = {

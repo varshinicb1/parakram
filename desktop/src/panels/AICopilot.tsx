@@ -85,9 +85,9 @@ export default function AICopilot({ onClose }: Props) {
         style={{ borderColor: 'var(--border)' }}>
         <div className="flex items-center gap-2">
           <Sparkles size={16} style={{ color: 'var(--accent)' }} />
-          <h2 className="text-[11px] tracking-widest uppercase font-bold" style={{ color: 'var(--text-primary)' }}>AI COPILOT</h2>
+          <h2 className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>AI Copilot</h2>
         </div>
-        <button onClick={onClose} className="p-1 rounded-none hover:bg-white/5 border border-transparent hover:border-[var(--border)]" style={{ color: 'var(--text-muted)' }}>
+        <button onClick={onClose} className="p-1 rounded-md hover:bg-white/5 border border-transparent hover:border-[var(--border)]" style={{ color: 'var(--text-muted)' }}>
           <X size={16} />
         </button>
       </div>
@@ -102,12 +102,12 @@ export default function AICopilot({ onClose }: Props) {
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className="max-w-[85%] px-3 py-2 rounded-none text-[10px] uppercase font-mono leading-relaxed whitespace-pre-line border"
+              className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-xs font-mono leading-relaxed whitespace-pre-line border ${msg.role === 'user' ? 'rounded-br-sm' : 'rounded-bl-sm'}`}
               style={{
                 background: msg.role === 'user' ? 'var(--accent)' : 'var(--bg-tertiary)',
-                color: msg.role === 'user' ? '#000' : 'var(--text-primary)',
+                color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
                 borderColor: msg.role === 'user' ? 'var(--accent)' : 'var(--border)',
-                boxShadow: msg.role === 'user' ? '0 0 10px var(--accent-glow)' : 'none',
+                boxShadow: msg.role === 'user' ? '0 2px 4px rgba(37, 99, 235, 0.2)' : 'none',
               }}
             >
               {msg.content}
@@ -135,8 +135,8 @@ export default function AICopilot({ onClose }: Props) {
         <div className="px-4 py-2 flex flex-wrap gap-1.5 border-t" style={{ borderColor: 'var(--border)' }}>
           {SUGGESTIONS.map((s) => (
             <button key={s} onClick={() => sendMessage(s)}
-              className="px-2 py-1 rounded-none border text-[9px] font-bold tracking-widest uppercase transition-all hover:scale-105"
-              style={{ background: 'var(--accent-subtle)', color: 'var(--accent)', borderColor: 'var(--accent)' }}>
+              className="px-3 py-1.5 rounded-lg border text-xs font-medium transition-all hover:bg-[var(--bg-tertiary)]"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', borderColor: 'var(--border)' }}>
               {s}
             </button>
           ))}
@@ -145,23 +145,23 @@ export default function AICopilot({ onClose }: Props) {
 
       {/* Input */}
       <div className="px-3 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
-        <div className="flex items-center gap-2 glass px-3 py-2 rounded-none border-l-2" style={{ borderLeftColor: 'var(--accent)' }}>
+        <div className="flex items-center gap-2 bg-[var(--bg-primary)] px-3 py-2 rounded-xl border" style={{ borderColor: 'var(--border)' }}>
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)}
-            placeholder="AWAITING INPUT..."
-            className="flex-1 bg-transparent outline-none text-[10px] uppercase font-mono tracking-widest placeholder-[var(--text-muted)]"
+            placeholder="Ask AI Copilot..."
+            className="flex-1 bg-transparent outline-none text-sm font-medium placeholder-[var(--text-muted)]"
             style={{ color: 'var(--text-primary)' }}
           />
           <motion.button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || isThinking}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="p-1.5 rounded-none border disabled:opacity-30"
-            style={{ background: 'var(--accent)', color: 'black', borderColor: 'var(--accent)', boxShadow: '0 0 10px var(--accent-glow)' }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="p-2 rounded-lg border disabled:opacity-50 transition-colors shadow-sm"
+            style={{ background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' }}
           >
             <Send size={12} />
           </motion.button>

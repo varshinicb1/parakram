@@ -76,20 +76,19 @@ export default function LLMSelector() {
     <div className="relative">
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-none border text-[9px] tracking-widest uppercase font-bold transition-all"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all shadow-sm"
         style={{
-          background: 'var(--bg-tertiary)',
-          borderColor: activeColor,
-          color: activeColor,
-          boxShadow: `0 0 8px ${activeColor}30`,
+          background: 'var(--bg-secondary)',
+          borderColor: 'var(--border)',
+          color: 'var(--text-primary)',
         }}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
-        <ActiveIcon size={12} />
-        {activeModel?.name || 'SELECT MODEL'}
-        {activeModel?.free && <span style={{ color: '#22c55e', fontSize: '7px' }}>FREE</span>}
-        <ChevronDown size={10} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ActiveIcon size={14} style={{ color: activeColor }} />
+        {activeModel?.name || 'Select Model'}
+        {activeModel?.free && <span className="px-1.5 py-0.5 rounded-md text-[10px]" style={{ background: '#22c55e15', color: '#22c55e' }}>Free</span>}
+        <ChevronDown size={12} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} style={{ color: 'var(--text-muted)' }} />
       </motion.button>
 
       <AnimatePresence>
@@ -98,18 +97,17 @@ export default function LLMSelector() {
             initial={{ opacity: 0, y: -5, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -5, scale: 0.95 }}
-            className="absolute top-full mt-1 right-0 w-80 border rounded-none overflow-hidden z-50"
+            className="absolute top-full mt-2 right-0 w-80 border rounded-xl overflow-hidden z-50 shadow-lg"
             style={{
               background: 'var(--bg-secondary)',
               borderColor: 'var(--border)',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
               maxHeight: '400px',
               overflowY: 'auto',
             }}
           >
-            <div className="p-2 border-b text-[8px] tracking-widest uppercase font-bold"
-              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-              INTELLIGENCE CORE — SELECT MODEL
+            <div className="p-3 border-b text-xs font-bold uppercase tracking-wider"
+              style={{ borderColor: 'var(--border)', color: 'var(--text-muted)', background: 'var(--bg-primary)' }}>
+              Intelligence Core
             </div>
 
             {/* Group by category */}
@@ -120,9 +118,9 @@ export default function LLMSelector() {
 
               return (
                 <div key={cat}>
-                  <div className="px-3 py-1 text-[7px] tracking-widest uppercase font-bold border-b"
-                    style={{ color: catColor, borderColor: 'var(--border)', background: `${catColor}08` }}>
-                    {cat.toUpperCase()} MODELS
+                  <div className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider border-b"
+                    style={{ color: catColor, borderColor: 'var(--border)', background: `${catColor}10` }}>
+                    {cat} Models
                   </div>
                   {catModels.map((m) => {
                     const Icon = CATEGORY_ICONS[m.category] || Brain;
@@ -132,28 +130,28 @@ export default function LLMSelector() {
                         key={m.id}
                         onClick={() => switchModel(m.id)}
                         disabled={loading}
-                        className="w-full flex items-center gap-3 px-3 py-2 text-left transition-all hover:bg-white/5 disabled:opacity-30 border-l-2"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--bg-primary)] disabled:opacity-50 border-l-2"
                         style={{
                           borderLeftColor: m.active ? color : 'transparent',
                           color: 'var(--text-primary)',
                         }}
                       >
-                        <Icon size={13} style={{ color }} />
+                        <Icon size={14} style={{ color }} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] tracking-widest uppercase font-bold truncate">{m.name}</span>
+                            <span className="text-xs font-bold truncate">{m.name}</span>
                             {m.free ? (
-                              <span className="px-1 py-0.5 text-[6px] tracking-widest uppercase font-bold rounded-none border"
-                                style={{ color: '#22c55e', borderColor: '#22c55e40' }}>FREE</span>
+                              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-md border"
+                                style={{ color: '#22c55e', borderColor: '#22c55e40', background: '#22c55e10' }}>Free</span>
                             ) : (
-                              <Lock size={8} style={{ color: 'var(--text-muted)' }} />
+                              <Lock size={10} style={{ color: 'var(--text-muted)' }} />
                             )}
                           </div>
-                          <div className="text-[7px] tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
-                            {m.provider} · {(m.context / 1000).toFixed(0)}K CTX
+                          <div className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            {m.provider} · {(m.context / 1000).toFixed(0)}k context
                           </div>
                         </div>
-                        {m.active && <Check size={12} style={{ color }} />}
+                        {m.active && <Check size={14} style={{ color }} />}
                       </button>
                     );
                   })}
